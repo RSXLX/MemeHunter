@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+/* 全局样式 */
+:root {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.95);
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* 自定义颜色变量 */
+  --color-monad-purple: #8b5cf6;
+  --color-monad-blue: #3b82f6;
+  --color-monad-cyan: #06b6d4;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.7);
+}
+
+/* 自定义工具类 */
+.btn-primary {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(to right, var(--color-monad-purple), var(--color-monad-blue));
+  color: white;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.3);
+  transition: all 0.3s;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 10px 25px -3px rgba(139, 92, 246, 0.5);
+  transform: scale(1.05);
+}
+
+.btn-primary:active {
+  transform: scale(0.95);
+}
+
+.btn-secondary {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 自定义颜色 */
+.text-monad-purple { color: var(--color-monad-purple); }
+.text-monad-blue { color: var(--color-monad-blue); }
+.text-monad-cyan { color: var(--color-monad-cyan); }
+.bg-monad-purple { background-color: var(--color-monad-purple); }
+.bg-monad-blue { background-color: var(--color-monad-blue); }
+.bg-monad-cyan { background-color: var(--color-monad-cyan); }
+.from-monad-purple { --tw-gradient-from: var(--color-monad-purple); }
+.to-monad-blue { --tw-gradient-to: var(--color-monad-blue); }
+.to-monad-cyan { --tw-gradient-to: var(--color-monad-cyan); }
+.via-monad-blue { --tw-gradient-via: var(--color-monad-blue); }
+.shadow-monad-purple\/30 { box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.3); }
+.shadow-monad-purple\/50 { box-shadow: 0 10px 25px -3px rgba(139, 92, 246, 0.5); }
+
+/* Meme 漂浮动画 */
+@keyframes float-1 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(10px, -15px) rotate(5deg); }
+  50% { transform: translate(-5px, -25px) rotate(-3deg); }
+  75% { transform: translate(-15px, -10px) rotate(3deg); }
+}
+
+@keyframes float-2 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(-20px, -10px) rotate(-5deg); }
+  66% { transform: translate(15px, -20px) rotate(5deg); }
+}
+
+@keyframes float-3 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(10px, -30px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+  50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.8); }
+}
+
+.meme-float-1 {
+  animation: float-1 4s ease-in-out infinite;
+}
+
+.meme-float-2 {
+  animation: float-2 5s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+
+.meme-float-3 {
+  animation: float-3 3.5s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.meme-float-4 {
+  animation: float-1 4.5s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+.meme-float-5 {
+  animation: float-2 3s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}

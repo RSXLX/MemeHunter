@@ -1,5 +1,5 @@
 ---
-status: 待审核
+status: 已审核
 version: 1.0
 last_updated: 2026-01-17
 reviewer: 用户

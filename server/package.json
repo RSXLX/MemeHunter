@@ -1,0 +1,21 @@
+{
+  "name": "meme-hunter-relayer",
+  "version": "1.0.0",
+  "description": "Meme Hunter Relayer Service - 代理狩猎请求并广播交易",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "keywords": ["meme", "hunter", "monad", "relayer"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "viem": "^2.21.0"
+  }
+}
