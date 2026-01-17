@@ -4,8 +4,10 @@ import { useAccount, useBalance } from 'wagmi';
 import GameCanvas from '../components/game/GameCanvas';
 import ControlBar from '../components/game/ControlBar';
 import PlayerBar from '../components/game/PlayerBar';
+import GameSidebar from '../components/game/GameSidebar';
 import { NET_CONFIG } from '../utils/constants';
 import { useSessionKey } from '../hooks/useSessionKey';
+import type { HuntRecord } from '../components/game/HuntHistoryPanel';
 
 interface HuntStats {
   totalHunts: number;
@@ -25,18 +27,34 @@ export default function Game() {
     totalRewards: 0,
   });
   const [lastResult, setLastResult] = useState<{ success: boolean; reward: number } | null>(null);
+  const [huntHistory, setHuntHistory] = useState<HuntRecord[]>([]);
 
   const handleExit = useCallback(() => {
     navigate('/');
   }, [navigate]);
 
-  const handleHuntResult = useCallback((success: boolean, reward: number) => {
+  const handleHuntResult = useCallback((success: boolean, reward: number, netSize: number, memeId?: number, memeEmoji?: string, netCost?: number, txHash?: string) => {
     setLastResult({ success, reward });
     setStats((prev) => ({
       totalHunts: prev.totalHunts + 1,
       successfulHunts: prev.successfulHunts + (success ? 1 : 0),
       totalRewards: prev.totalRewards + reward,
     }));
+    
+    // 添加到历史记录
+    const newRecord: HuntRecord = {
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: Date.now(),
+      memeId: memeId || 0,
+      memeEmoji: memeEmoji || '🕸️',
+      netSize,
+      success,
+      reward,
+      netCost: netCost || 0,
+      txHash: txHash,
+    };
+    
+    setHuntHistory(prev => [newRecord, ...prev]);
     
     // 刷新余额
     if (success) {
@@ -54,9 +72,9 @@ export default function Game() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-hidden">
       {/* 顶部状态栏 */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+      <header className="flex-none flex items-center justify-between px-6 py-4 border-b border-white/10 bg-[#0f0f23]">
         <div className="flex items-center gap-6">
           {/* 余额 */}
           <div className="flex items-center gap-2">
@@ -105,7 +123,7 @@ export default function Game() {
 
       {/* 狩猎结果提示 */}
       {lastResult && (
-        <div className={`absolute top-20 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg z-50 animate-bounce ${
+        <div className={`absolute top-24 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg z-50 animate-bounce pointer-events-none ${
           lastResult.success 
             ? 'bg-green-500/20 border border-green-500/50 text-green-400' 
             : 'bg-red-500/20 border border-red-500/50 text-red-400'
@@ -119,17 +137,31 @@ export default function Game() {
       )}
 
       {/* 游戏主区域 */}
-      <main className="flex-1 flex flex-col items-center justify-center py-6">
-        {/* 游戏画布 */}
-        <div className="card p-2 mb-4">
-          <GameCanvas 
-            selectedNet={selectedNet} 
-            onHuntResult={handleHuntResult}
-          />
+      <main className="flex-1 flex overflow-hidden">
+        {/* 左侧：游戏区域 */}
+        <div className="flex-1 flex flex-col p-6 min-w-0">
+          {/* 画布容器 - 自适应填充剩余空间 */}
+          <div className="flex-1 flex items-center justify-center min-h-0 mb-4">
+             <div className="card p-2 h-full aspect-[4/3] flex items-center justify-center overflow-hidden">
+              <GameCanvas 
+                selectedNet={selectedNet} 
+                onHuntResult={(success, reward, memeId, memeEmoji, netCost, txHash) => 
+                  handleHuntResult(success, reward, selectedNet, memeId, memeEmoji, netCost, txHash)
+                }
+              />
+            </div>
+          </div>
+
+          {/* 玩家列表 - 固定高度 */}
+          <div className="flex-none">
+            <PlayerBar />
+          </div>
         </div>
 
-        {/* 玩家列表 */}
-        <PlayerBar />
+        {/* 右侧：侧边栏 - 固定宽度 */}
+        <div className="w-80 flex-none p-6 pl-0 border-l border-white/5 bg-[#0f0f23]/50 backdrop-blur-sm">
+          <GameSidebar history={huntHistory} />
+        </div>
       </main>
 
       {/* 底部控制栏 */}

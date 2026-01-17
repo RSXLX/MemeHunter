@@ -47,6 +47,24 @@ body {
   background: rgba(139, 92, 246, 0.7);
 }
 
+/* 局部自定义滚动条 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
+}
+
 /* 自定义工具类 */
 .btn-primary {
   padding: 0.75rem 1.5rem;

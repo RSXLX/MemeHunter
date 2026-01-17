@@ -13,7 +13,14 @@ import { useGameSocket, type NetAction } from '../../hooks/useGameSocket';
 
 interface GameCanvasProps {
   selectedNet: number;
-  onHuntResult?: (success: boolean, reward: number) => void;
+  onHuntResult?: (
+    success: boolean, 
+    reward: number, 
+    memeId?: number, 
+    memeEmoji?: string, 
+    netCost?: number, 
+    txHash?: string
+  ) => void;
 }
 
 export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProps) {
@@ -38,6 +45,7 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
 
   // 绘制函数
   const draw = useCallback((ctx: CanvasRenderingContext2D) => {
+    // ... (省略未变更的绘制代码，保持原有逻辑) 
     const currentTime = performance.now();
     
     // 清空画布
@@ -227,6 +235,8 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
           animationsRef.current = [...animationsRef.current, emptyAnim];
         }, 250);
         emitHuntResult(x, y, selectedNet, 'empty');
+        // 空网也会消耗 Gas，这里 cost 是估计值
+        onHuntResult?.(false, 0, undefined, undefined, NET_CONFIG[selectedNet].cost);
         return;
       }
 
@@ -238,6 +248,7 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
 
       isHuntingRef.current = true;
       const targetMeme = collision.meme;
+      const memeConfig = MEME_CONFIG.find(m => m.id === targetMeme.type);
 
       try {
         // 调用 Relayer 进行狩猎
@@ -261,7 +272,14 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
             emitMemeCaptured(targetMeme.id, result.reward);
             
             emitHuntResult(x, y, selectedNet, 'catch', targetMeme.type);
-            onHuntResult?.(true, result.reward);
+            onHuntResult?.(
+              true, 
+              result.reward, 
+              targetMeme.type, 
+              memeConfig?.emoji, 
+              NET_CONFIG[selectedNet].cost, 
+              result.txHash
+            );
           } else {
             // 逃脱
             const escapeAnim = createAnimation(
@@ -275,7 +293,14 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
             animationsRef.current = [...animationsRef.current, escapeAnim];
             
             emitHuntResult(x, y, selectedNet, 'escape', targetMeme.type);
-            onHuntResult?.(false, 0);
+            onHuntResult?.(
+              false, 
+              0, 
+              targetMeme.type, 
+              memeConfig?.emoji, 
+              NET_CONFIG[selectedNet].cost, 
+              result.txHash
+            );
           }
 
           // 空投触发

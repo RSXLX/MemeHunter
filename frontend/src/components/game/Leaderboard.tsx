@@ -26,10 +26,10 @@ export default function Leaderboard({ className = '' }: LeaderboardProps) {
   }
 
   return (
-    <div className={`bg-gray-900/80 rounded-xl p-4 ${className}`}>
-      <h3 className="text-lg font-bold text-purple-400 mb-3">🏆 Leaderboard</h3>
+    <div className={`bg-gray-900/80 rounded-xl p-4 flex flex-col ${className}`}>
+      <h3 className="text-lg font-bold text-purple-400 mb-3 flex-none">🏆 Leaderboard</h3>
       
-      <div className="space-y-2">
+      <div className="space-y-2 overflow-y-auto flex-1 pr-1 custom-scrollbar">
         {leaderboard.map((entry: LeaderboardEntry, index: number) => (
           <div 
             key={entry.address}
@@ -44,17 +44,17 @@ export default function Leaderboard({ className = '' }: LeaderboardProps) {
               <span className="text-lg font-bold w-6 text-center">
                 {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}`}
               </span>
-              <span className="text-white font-medium">{entry.nickname}</span>
+              <span className="text-white font-medium truncate max-w-[100px]">{entry.nickname}</span>
             </div>
             
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-2 text-sm flex-none">
               <span className="text-gray-400">
                 🎯 {entry.captures}
               </span>
-              <span className="text-green-400 font-mono">
+              <span className="text-green-400 font-mono w-[80px] text-right">
                 +{typeof entry.totalReward === 'number' 
                   ? entry.totalReward.toFixed(3) 
-                  : parseFloat(entry.totalReward || '0').toFixed(3)} MON
+                  : parseFloat(entry.totalReward || '0').toFixed(3)}
               </span>
             </div>
           </div>

@@ -575,7 +575,10 @@ frontend/
 │   │       ├── HuntNet.tsx      # 捕网
 │   │       ├── AnimationLayer.tsx
 │   │       ├── PlayerBar.tsx
-│   │       └── ControlBar.tsx
+│   │       ├── ControlBar.tsx
+│   │       ├── Leaderboard.tsx  # 排行榜
+│   │       ├── HuntHistoryPanel.tsx # 交易记录
+│   │       └── GameSidebar.tsx  # 侧边栏容器
 │   ├── hooks/
 │   │   ├── useWallet.ts
 │   │   ├── useSessionKey.ts
@@ -610,7 +613,9 @@ frontend/
 
 ### 5.2 核心流程
 
-#### 狩猎流程时序图
+### 5.3 核心流程
+
+#### 狩猎流程时序图 (已更新: v1.1)
 
 ```
 ┌────────┐    ┌────────┐    ┌────────┐    ┌────────┐    ┌────────┐
@@ -619,10 +624,10 @@ frontend/
     │             │             │             │             │
     │ 点击画布    │             │             │             │
     ├────────────▶│             │             │             │
-    │             │ 碰撞检测    │             │             │
+    │             │ (碰撞检测)  │             │             │
     │             ├────────────▶│             │             │
     │             │             │             │             │
-    │◀────────────┤ 播放网动画  │             │             │
+    │◀────────────┤ 播放本地网  │             │             │
     │             │             │             │             │
     │             │ 有Meme?    │             │             │
     │             │    ┌────────┴────────┐    │             │
@@ -637,12 +642,41 @@ frontend/
     │             │    │                      ├────────────▶│
     │             │    │                      │             │
     │             │    │                      │◀────────────┤
-    │             │    │◀─────────────────────┤ 返回结果    │
+    │             │    │◀─────────────────────┤ 广播结果    │
     │◀────────────┼────┤ 播放结果动画        │             │
     │             │    │                      │             │
 ```
 
-### 5.3 wagmi 配置
+### 5.4 实时同步与竞技系统 (新增)
+
+#### 5.4.1 通信协议
+基于 Socket.io 实现全双工通信：
+
+| 事件 (Client -> Server) | 数据 | 描述 |
+|------------------------|------|------|
+| `netLaunch` | `{ x, y, netSize }` | 广播捕网动作 |
+| `memeCaptured` | `{ memeId, reward }` | 通知捕获成功 |
+| `requestLeaderboard` | `null` | 主动拉取排行榜 |
+
+| 事件 (Server -> Client) | 数据 | 描述 |
+|------------------------|------|------|
+| `gameState` | `{ memes: [...] }` | 权威 Meme 状态同步 (10Hz) |
+| `netLaunchBroadcast` | `{ playerId, x, y }` | 其他玩家动作 |
+| `leaderboardUpdate` | `LeaderboardEntry[]` | 排行榜更新 |
+
+#### 5.4.2 画布升级
+- **分辨率**：扩大至 `1600x1200` 以适应更多玩家同屏。
+- **Meme 同步**：服务端权威生成，客户端只负责渲染。
+
+#### 5.4.3 排行榜 (Leaderboard)
+- **存储**：Relayer 内存存储 (Map: playerId -> Stats)。
+- **字段**：Nickname, Captures, TotalReward。
+- **更新**：每次 `memeCaptured` 事件触发更新并广播。
+
+#### 5.4.4 Session 应急处理
+- **Reset Function**：前端提供 "Reset Session" 按钮，用于清除本地 key 状态，解决因 nonce 不同步或 key 丢失导致的校验失败。
+
+### 5.5 wagmi 配置
 
 ```typescript
 // src/config/wagmi.ts
