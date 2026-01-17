@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useAccount } from 'wagmi';
 import { useGameSocket } from '../../hooks/useGameSocket';
 
@@ -12,6 +13,7 @@ const NET_COLORS = [
 ];
 
 export default function PlayerBar() {
+  const { t } = useTranslation();
   const { address: currentAddress } = useAccount();
   const { players, isConnected } = useGameSocket();
 
@@ -23,7 +25,7 @@ export default function PlayerBar() {
       {/* 玩家列表 */}
       <div className="flex items-center gap-3 flex-wrap justify-center">
         {players.length === 0 ? (
-          <span className="text-gray-500">等待玩家加入...</span>
+          <span className="text-gray-500">{t('playerBar.waiting')}</span>
         ) : (
           players.map((player) => {
             const isMe = player.address?.toLowerCase() === currentAddress?.toLowerCase();
@@ -49,7 +51,7 @@ export default function PlayerBar() {
                 
                 {/* 玩家昵称 */}
                 <span className={`font-medium ${isMe ? 'text-purple-300' : 'text-gray-300'}`}>
-                  {isMe ? '🎯 You' : player.nickname || `#${player.address?.slice(-4)}`}
+                  {isMe ? t('playerBar.you') : player.nickname || `#${player.address?.slice(-4)}`}
                 </span>
                 
                 {/* 狩猎状态 */}
@@ -64,7 +66,7 @@ export default function PlayerBar() {
       
       {/* 在线人数 */}
       <div className="text-gray-500 ml-2">
-        {players.length}/10 online
+        {t('playerBar.online', { count: players.length })}
       </div>
     </div>
   );

@@ -1,13 +1,16 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAccount, useBalance } from 'wagmi';
+import { useTranslation } from 'react-i18next';
 import GameCanvas from '../components/game/GameCanvas';
 import ControlBar from '../components/game/ControlBar';
 import PlayerBar from '../components/game/PlayerBar';
 import GameSidebar from '../components/game/GameSidebar';
+import LanguageSwitcher from '../components/common/LanguageSwitcher';
 import { NET_CONFIG } from '../utils/constants';
 import { useSessionKey } from '../hooks/useSessionKey';
 import type { HuntRecord } from '../components/game/HuntHistoryPanel';
+import logoImage from '../assets/logo.png';
 
 interface HuntStats {
   totalHunts: number;
@@ -17,6 +20,7 @@ interface HuntStats {
 
 export default function Game() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { address } = useAccount();
   const { data: balance, refetch: refetchBalance } = useBalance({ address });
   const { isValid: hasSessionKey, remainingTime } = useSessionKey();
@@ -80,29 +84,35 @@ export default function Game() {
           <div className="flex items-center gap-2">
             <span className="text-2xl">💰</span>
             <span className="text-xl font-semibold text-white">
-              {balance ? Number(balance.formatted).toFixed(3) : '0.000'} MON
+              {balance ? Number(balance.formatted).toFixed(3) : '0.000'} {t('common.mon')}
             </span>
           </div>
           
           {/* 狩猎统计 */}
           <div className="flex items-center gap-4 text-sm">
             <span className="text-gray-400">
-              Hunts: <span className="text-white font-semibold">{stats.totalHunts}</span>
+              {t('game.hunts')}: <span className="text-white font-semibold">{stats.totalHunts}</span>
             </span>
             <span className="text-gray-400">
-              Catch: <span className="text-green-400 font-semibold">{stats.successfulHunts}</span>
+              {t('game.catch')}: <span className="text-green-400 font-semibold">{stats.successfulHunts}</span>
             </span>
             <span className="text-gray-400">
-              Earned: <span className="text-yellow-400 font-semibold">+{stats.totalRewards.toFixed(3)} MON</span>
+              {t('game.earned')}: <span className="text-yellow-400 font-semibold">+{stats.totalRewards.toFixed(3)} {t('common.mon')}</span>
             </span>
           </div>
         </div>
 
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
-          MEME HUNTER
-        </h1>
+        <div className="flex items-center gap-3">
+          <img src={logoImage} alt="MemeHunter" className="w-10 h-10" />
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
+            {t('game.title')}
+          </h1>
+        </div>
 
         <div className="flex items-center gap-4">
+          {/* 语言切换 */}
+          <LanguageSwitcher />
+          
           {/* Session Key 状态 */}
           {hasSessionKey && (
             <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/30 rounded-lg">
@@ -116,7 +126,7 @@ export default function Game() {
             className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
           >
             <span>🚪</span>
-            <span className="text-gray-300">Exit</span>
+            <span className="text-gray-300">{t('game.exit')}</span>
           </button>
         </div>
       </header>
@@ -129,9 +139,9 @@ export default function Game() {
             : 'bg-red-500/20 border border-red-500/50 text-red-400'
         }`}>
           {lastResult.success ? (
-            <span className="font-semibold">🎉 Caught! +{lastResult.reward.toFixed(3)} MON</span>
+            <span className="font-semibold">{t('game.caught', { reward: lastResult.reward.toFixed(3) })}</span>
           ) : (
-            <span className="font-semibold">😅 Escaped! Try again!</span>
+            <span className="font-semibold">{t('game.escaped')}</span>
           )}
         </div>
       )}

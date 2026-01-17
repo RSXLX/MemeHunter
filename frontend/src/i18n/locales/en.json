@@ -1,0 +1,84 @@
+{
+  "common": {
+    "mon": "MON",
+    "loading": "Loading...",
+    "error": "Error"
+  },
+  "home": {
+    "title": "MEME",
+    "subtitle": "🎯 HUNTER 🎯",
+    "description": "Catch Memes, Win Airdrops on Monad",
+    "connectWallet": "🔗 CONNECT WALLET",
+    "connecting": "⏳ Connecting...",
+    "wrongNetwork": "⚠️ Wrong Network! Please switch to Monad Testnet",
+    "switchNetwork": "Switch Network",
+    "switching": "Switching...",
+    "sessionActive": "🔐 Session Active",
+    "enterGame": "🎮 ENTER GAME",
+    "authorizeAndPlay": "🔐 AUTHORIZE & PLAY",
+    "disconnect": "Disconnect",
+    "resetSession": "Reset Session",
+    "resetConfirm": "Reset local session key? This will require re-authorization.",
+    "poweredBy": "Powered by",
+    "monad": "MONAD"
+  },
+  "game": {
+    "title": "MEME HUNTER",
+    "hunts": "Hunts",
+    "catch": "Catch",
+    "earned": "Earned",
+    "exit": "Exit",
+    "caught": "🎉 Caught! +{{reward}} MON",
+    "escaped": "😅 Escaped! Try again!"
+  },
+  "controlBar": {
+    "netSize": "Net Size",
+    "small": "Small",
+    "medium": "Medium",
+    "large": "Large",
+    "cost": "Cost",
+    "perHunt": "/hunt"
+  },
+  "leaderboard": {
+    "title": "🏆 Leaderboard",
+    "connecting": "Connecting...",
+    "empty": "No captures yet. Be the first!"
+  },
+  "history": {
+    "title": "📜 History",
+    "last15": "Last 15",
+    "empty": "No transactions yet",
+    "caught": "CAUGHT",
+    "escaped": "ESCAPED",
+    "viewExplorer": "🔍 View on Explorer ↗"
+  },
+  "playerBar": {
+    "waiting": "Waiting for players...",
+    "you": "🎯 You",
+    "online": "{{count}}/10 online"
+  },
+  "sessionModal": {
+    "title": "🔐 Session Key",
+    "active": "✅ Session Key Active",
+    "address": "Address",
+    "remaining": "Remaining",
+    "startPlaying": "🎮 Start Playing",
+    "revoke": "Revoke",
+    "needsReauth": "⚠️ Your Session Key is no longer valid on-chain. Please authorize a new one.",
+    "description": "Session Key enables {{feature}} for 24 hours:",
+    "gaslessHunting": "gasless hunting",
+    "features": {
+      "oneTime": "One-time wallet signature to authorize",
+      "noPopup": "No popup for each hunt action",
+      "secure": "Secure - key is stored locally",
+      "revokable": "Can be revoked anytime"
+    },
+    "agreement": "I understand that this creates a temporary key that can sign hunt transactions on my behalf.",
+    "authorize": "🔐 Authorize Session Key",
+    "authorizing": "Authorizing..."
+  },
+  "canvas": {
+    "synced": "SYNCED",
+    "offline": "OFFLINE"
+  }
+}

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { monadTestnet } from '../../config/wagmi';
 
 export interface HuntRecord {
@@ -19,6 +20,8 @@ interface HuntHistoryPanelProps {
 }
 
 export default function HuntHistoryPanel({ history, className = '' }: HuntHistoryPanelProps) {
+  const { t } = useTranslation();
+  
   // 只显示最近 15 条记录
   const recentHistory = useMemo(() => {
     return history.slice(0, 15);
@@ -34,10 +37,10 @@ export default function HuntHistoryPanel({ history, className = '' }: HuntHistor
     return (
       <div className={`bg-gray-900/80 rounded-xl p-4 flex flex-col h-full ${className}`}>
         <h3 className="text-lg font-bold text-blue-400 mb-3 flex items-center gap-2">
-          <span>📜</span> History
+          <span>📜</span> {t('history.title').replace('📜 ', '')}
         </h3>
         <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
-          No transactions yet
+          {t('history.empty')}
         </div>
       </div>
     );
@@ -47,9 +50,9 @@ export default function HuntHistoryPanel({ history, className = '' }: HuntHistor
     <div className={`bg-gray-900/80 rounded-xl p-4 flex flex-col h-full ${className}`}>
       <h3 className="text-lg font-bold text-blue-400 mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span>📜</span> History
+          <span>📜</span> {t('history.title').replace('📜 ', '')}
         </div>
-        <span className="text-xs text-gray-400 font-normal">Last 15</span>
+        <span className="text-xs text-gray-400 font-normal">{t('history.last15')}</span>
       </h3>
       
       <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-2">
@@ -73,7 +76,7 @@ export default function HuntHistoryPanel({ history, className = '' }: HuntHistor
               </span>
               <div className="flex flex-col">
                 <span className={`text-sm font-bold ${record.success ? 'text-green-400' : 'text-red-400'}`}>
-                  {record.success ? 'CAUGHT' : 'ESCAPED'}
+                  {record.success ? t('history.caught') : t('history.escaped')}
                 </span>
                 <span className="text-[10px] text-gray-400">
                   {new Date(record.timestamp).toLocaleTimeString()}
@@ -89,14 +92,14 @@ export default function HuntHistoryPanel({ history, className = '' }: HuntHistor
                   : `-${record.netCost.toFixed(3)}`
                 }
               </span>
-              <span className="text-[10px] text-gray-500">MON</span>
+              <span className="text-[10px] text-gray-500">{t('common.mon')}</span>
             </div>
 
             {/* Hover 提示 */}
             {record.txHash && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                 <span className="text-xs text-white font-medium flex items-center gap-1">
-                  🔍 View on Explorer ↗
+                  {t('history.viewExplorer')}
                 </span>
               </div>
             )}

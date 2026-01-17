@@ -1,4 +1,5 @@
 import { useRef, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CANVAS_CONFIG, MEME_CONFIG, RARITY_COLORS, NET_CONFIG } from '../../utils/constants';
 import { detectCollision, getCanvasCoordinates } from '../../game/collision';
 import { 
@@ -24,6 +25,7 @@ interface GameCanvasProps {
 }
 
 export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProps) {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationsRef = useRef<Animation[]>([]);
   const animationFrameRef = useRef<number | undefined>(undefined);
@@ -77,7 +79,7 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
     ctx.fillStyle = '#fff';
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(isConnected ? 'SYNCED' : 'OFFLINE', 35, 24);
+    ctx.fillText(isConnected ? t('canvas.synced') : t('canvas.offline'), 35, 24);
 
     // 绘制 Meme (使用服务端同步数据)
     memes.forEach((meme) => {
@@ -117,7 +119,7 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
     ctx.strokeStyle = 'rgba(139, 92, 246, 0.5)';
     ctx.lineWidth = 2;
     ctx.strokeRect(0, 0, CANVAS_CONFIG.width, CANVAS_CONFIG.height);
-  }, [memes, remoteActions, isConnected]);
+  }, [memes, remoteActions, isConnected, t]);
 
   // 绘制其他玩家的捕网动作
   const drawRemoteNetActions = (

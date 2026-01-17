@@ -1,13 +1,17 @@
 import { useNavigate } from 'react-router-dom';
 import { useAccount, useBalance, useConnect, useDisconnect, useSwitchChain } from 'wagmi';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MEME_CONFIG } from '../utils/constants';
 import { useSessionKey } from '../hooks/useSessionKey';
 import SessionKeyModal from '../components/wallet/SessionKeyModal';
+import LanguageSwitcher from '../components/common/LanguageSwitcher';
 import { monadTestnet } from '../config/wagmi';
+import logoImage from '../assets/logo.png';
 
 export default function Home() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { isConnected, address, chainId } = useAccount();
   const { data: balance } = useBalance({ address });
   const { connect, connectors, isPending } = useConnect();
@@ -46,16 +50,26 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4">
+      {/* 语言切换 - 右上角 */}
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
+
       {/* Logo */}
       <div className="text-center mb-8">
-        <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent mb-2">
-          MEME
+        <img 
+          src={logoImage} 
+          alt="MemeHunter Logo" 
+          className="w-32 h-32 md:w-40 md:h-40 mx-auto mb-4 drop-shadow-2xl"
+        />
+        <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent mb-2">
+          {t('home.title')}
         </h1>
-        <h2 className="text-4xl md:text-6xl font-bold text-white mb-4">
-          🎯 HUNTER 🎯
+        <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+          {t('home.subtitle')}
         </h2>
         <p className="text-gray-400 text-lg">
-          Catch Memes, Win Airdrops on Monad
+          {t('home.description')}
         </p>
       </div>
 
@@ -80,7 +94,7 @@ export default function Home() {
             disabled={isPending}
             className="px-8 py-4 text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-2xl shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 active:scale-95 animate-pulse-glow disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isPending ? '⏳ Connecting...' : '🔗 CONNECT WALLET'}
+            {isPending ? t('home.connecting') : t('home.connectWallet')}
           </button>
         ) : (
           <div className="flex flex-col items-center gap-4">
@@ -88,14 +102,14 @@ export default function Home() {
             {isWrongChain && (
               <div className="card bg-orange-500/10 border-orange-500/30 flex items-center gap-4 px-6 py-3">
                 <span className="text-orange-400">
-                  ⚠️ Wrong Network! Please switch to Monad Testnet
+                  {t('home.wrongNetwork')}
                 </span>
                 <button
                   onClick={() => switchChain({ chainId: monadTestnet.id })}
                   disabled={isSwitching}
                   className="px-3 py-1 bg-orange-500 text-white text-sm rounded-lg hover:bg-orange-600 disabled:opacity-50"
                 >
-                  {isSwitching ? 'Switching...' : 'Switch Network'}
+                  {isSwitching ? t('home.switching') : t('home.switchNetwork')}
                 </button>
               </div>
             )}
@@ -107,11 +121,11 @@ export default function Home() {
                 {address?.slice(0, 6)}...{address?.slice(-4)}
               </span>
               <span className="text-purple-400 font-semibold">
-                {balance ? Number(balance.formatted).toFixed(3) : '0.000'} MON
+                {balance ? Number(balance.formatted).toFixed(3) : '0.000'} {t('common.mon')}
               </span>
               {hasValidSession && (
                 <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
-                  🔐 Session Active
+                  {t('home.sessionActive')}
                 </span>
               )}
             </div>
@@ -121,7 +135,7 @@ export default function Home() {
               onClick={handleEnterGame}
               className="px-8 py-4 text-xl font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl shadow-lg hover:shadow-green-500/50 hover:scale-105 active:scale-95 transition-all duration-300"
             >
-              {hasValidSession ? '🎮 ENTER GAME' : '🔐 AUTHORIZE & PLAY'}
+              {hasValidSession ? t('home.enterGame') : t('home.authorizeAndPlay')}
             </button>
 
             {/* 辅助操作栏 */}
@@ -130,19 +144,19 @@ export default function Home() {
                 onClick={() => disconnect()}
                 className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
               >
-                Disconnect
+                {t('home.disconnect')}
               </button>
               
               <button
                 onClick={() => {
-                  if (window.confirm('Reset local session key? This will require re-authorization.')) {
+                  if (window.confirm(t('home.resetConfirm'))) {
                     resetSessionKey();
                   }
                 }}
                 className="text-sm text-red-500/50 hover:text-red-400 transition-colors"
                 title="Reset local session key if stuck"
               >
-                Reset Session
+                {t('home.resetSession')}
               </button>
             </div>
           </div>
@@ -152,7 +166,7 @@ export default function Home() {
       {/* 底部 */}
       <div className="absolute bottom-8 text-center">
         <p className="text-gray-500 text-sm">
-          Powered by <span className="text-purple-500 font-semibold">MONAD</span> ⚡
+          {t('home.poweredBy')} <span className="text-purple-500 font-semibold">{t('home.monad')}</span> ⚡
         </p>
       </div>
 
