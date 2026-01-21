@@ -75,6 +75,9 @@ export function useGameSocket() {
         address,
         balance: balance?.formatted || '0',
       });
+      
+      // 请求初始排行榜（必须在连接建立后发送）
+      socket.emit('requestLeaderboard');
     });
 
     socket.on('disconnect', () => {
@@ -154,9 +157,6 @@ export function useGameSocket() {
     socket.on('leaderboard', (data: LeaderboardEntry[]) => {
       setLeaderboard(data);
     });
-
-    // 请求初始排行榜
-    socket.emit('requestLeaderboard');
 
     return () => {
       socket.disconnect();

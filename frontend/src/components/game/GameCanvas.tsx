@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useMemo } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CANVAS_CONFIG, MEME_CONFIG, RARITY_COLORS, NET_CONFIG } from '../../utils/constants';
 import { detectCollision, getCanvasCoordinates } from '../../game/collision';
@@ -8,6 +8,7 @@ import {
   createAnimation, 
   type Animation 
 } from '../../game/animations';
+import { memeInterpolator, type InterpolatedMeme } from '../../game/memeInterpolator';
 import { useHunt } from '../../hooks/useHunt';
 import { useSessionKey } from '../../hooks/useSessionKey';
 import { useGameSocket, type NetAction } from '../../hooks/useGameSocket';
@@ -42,8 +43,15 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
     isConnected 
   } = useGameSocket();
 
-  // 从服务端 gameState 获取 Meme 列表
-  const memes = useMemo(() => gameState?.memes || [], [gameState?.memes]);
+  // 当前帧的插值后 meme 列表（用于绘制）
+  const interpolatedMemesRef = useRef<InterpolatedMeme[]>([]);
+
+  // 当服务端数据更新时，同步到插值器
+  useEffect(() => {
+    if (gameState?.memes) {
+      memeInterpolator.updateFromServer(gameState.memes);
+    }
+  }, [gameState?.memes]);
 
   // 绘制函数
   const draw = useCallback((ctx: CanvasRenderingContext2D) => {
@@ -81,8 +89,11 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
     ctx.textAlign = 'left';
     ctx.fillText(isConnected ? t('canvas.synced') : t('canvas.offline'), 35, 24);
 
-    // 绘制 Meme (使用服务端同步数据)
-    memes.forEach((meme) => {
+    // 更新插值器并获取当前帧的 meme 位置
+    interpolatedMemesRef.current = memeInterpolator.update();
+
+    // 绘制 Meme（使用插值后的平滑位置）
+    interpolatedMemesRef.current.forEach((meme: InterpolatedMeme) => {
       const config = MEME_CONFIG.find((m) => m.id === meme.memeId);
       if (!config) return;
 
@@ -91,11 +102,11 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
       ctx.shadowColor = glowColor;
       ctx.shadowBlur = 15;
 
-      // 绘制 emoji
+      // 使用插值后的渲染位置（renderX, renderY）而非原始位置
       ctx.font = '50px serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(config.emoji, meme.x, meme.y);
+      ctx.fillText(config.emoji, meme.renderX, meme.renderY);
 
       // 重置阴影
       ctx.shadowBlur = 0;
@@ -104,7 +115,7 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
       if (config.rarity !== 'Common') {
         ctx.font = '12px sans-serif';
         ctx.fillStyle = glowColor;
-        ctx.fillText(config.rarity, meme.x, meme.y + 35);
+        ctx.fillText(config.rarity, meme.renderX, meme.renderY + 35);
       }
     });
 
@@ -119,7 +130,7 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
     ctx.strokeStyle = 'rgba(139, 92, 246, 0.5)';
     ctx.lineWidth = 2;
     ctx.strokeRect(0, 0, CANVAS_CONFIG.width, CANVAS_CONFIG.height);
-  }, [memes, remoteActions, isConnected, t]);
+  }, [remoteActions, isConnected, t]);
 
   // 绘制其他玩家的捕网动作
   const drawRemoteNetActions = (
@@ -212,8 +223,9 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
       // 广播捕网动作给其他玩家
       emitNetLaunch(x, y, selectedNet);
       
-      // 将服务端 Meme 转换为本地格式进行碰撞检测
-      const localMemes = memes.map((m) => ({
+      // 使用插值器的 meme 列表进行碰撞检测（使用渲染位置，即玩家的实际点击位置）
+      const currentMemes = memeInterpolator.getMemesForCollision();
+      const localMemes = currentMemes.map((m) => ({
         id: m.id,
         type: m.memeId,
         x: m.x,
@@ -313,10 +325,10 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
       } catch (error) {
         console.error('Hunt failed:', error);
       } finally {
-        isHuntingRef.current = false;
+      isHuntingRef.current = false;
       }
     },
-    [selectedNet, memes, hunt, isHunting, hasSessionKey, onHuntResult, emitNetLaunch, emitHuntResult]
+    [selectedNet, hunt, isHunting, hasSessionKey, onHuntResult, emitNetLaunch, emitHuntResult, emitMemeCaptured]
   );
 
   return (
