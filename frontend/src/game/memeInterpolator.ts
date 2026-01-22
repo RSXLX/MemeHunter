@@ -5,7 +5,7 @@
  * 解决方案：在两次服务端更新之间进行线性插值，让移动更平滑
  */
 
-import { CANVAS_CONFIG, MEME_CONFIG } from '../utils/constants';
+import { CANVAS_CONFIG } from '../utils/constants';
 
 export interface ServerMeme {
   id: string;
@@ -43,14 +43,12 @@ const MAX_EXTRAPOLATION = 200; // ms
  */
 export class MemeInterpolator {
   private memes: Map<string, InterpolatedMeme> = new Map();
-  private lastServerUpdate: number = 0;
 
   /**
    * 接收服务端数据更新
    */
   updateFromServer(serverMemes: ServerMeme[]): void {
     const now = performance.now();
-    this.lastServerUpdate = now;
 
     const serverMemeIds = new Set(serverMemes.map(m => m.id));
 

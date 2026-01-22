@@ -1,0 +1,1 @@
+[2026-01-21T03:44:05.655959077Z ERROR cargo_build_sbf] Failed to obtain package metadata: failed to start `cargo metadata`: Permission denied (os error 13)

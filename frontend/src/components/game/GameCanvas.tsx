@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CANVAS_CONFIG, MEME_CONFIG, RARITY_COLORS, NET_CONFIG } from '../../utils/constants';
+import { DEFAULT_ROOM_ADDRESS, DEFAULT_TOKEN_MINT } from '../../config/solana';
 import { detectCollision, getCanvasCoordinates } from '../../game/collision';
 import { 
   drawAnimations, 
@@ -10,7 +11,7 @@ import {
 } from '../../game/animations';
 import { memeInterpolator, type InterpolatedMeme } from '../../game/memeInterpolator';
 import { useHunt } from '../../hooks/useHunt';
-import { useSessionKey } from '../../hooks/useSessionKey';
+import { useSolanaSession } from '../../hooks/useSolanaSession';
 import { useGameSocket, type NetAction } from '../../hooks/useGameSocket';
 
 interface GameCanvasProps {
@@ -33,7 +34,7 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
   const isHuntingRef = useRef<boolean>(false);
   
   const { hunt, isHunting } = useHunt();
-  const { isValid: hasSessionKey } = useSessionKey();
+  const { isValid: hasSessionKey } = useSolanaSession();
   const { 
     gameState, 
     remoteActions, 
@@ -266,7 +267,7 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
 
       try {
         // 调用 Relayer 进行狩猎
-        const result = await hunt(targetMeme.type, selectedNet);
+        const result = await hunt(targetMeme.type, selectedNet, DEFAULT_ROOM_ADDRESS, DEFAULT_TOKEN_MINT);
 
         if (result) {
           if (result.success) {
@@ -317,10 +318,10 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
             );
           }
 
-          // 空投触发
-          if (result.airdropTriggered && result.airdropReward) {
+          // 空投触发 (暂未实现)
+          /* if (result.airdropTriggered && result.airdropReward) {
             console.log(`🎁 Airdrop triggered! +${result.airdropReward} MON`);
-          }
+          } */
         }
       } catch (error) {
         console.error('Hunt failed:', error);

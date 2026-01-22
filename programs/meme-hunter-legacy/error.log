@@ -1,0 +1,117 @@
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/programs/meme-hunter/Cargo.toml
+workspace: /mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/Cargo.toml
+   Compiling proc-macro2 v1.0.105
+   Compiling quote v1.0.43
+    Checking solana-define-syscall v4.0.1
+    Checking solana-program-error v3.0.0
+   Compiling syn v2.0.114
+    Checking solana-address v2.0.0
+    Checking solana-account-view v1.0.0
+    Checking pinocchio v0.10.1
+   Compiling solana-program-log-macro v1.0.0
+    Checking solana-program-log v1.1.0
+    Checking meme-hunter v0.1.0 (/mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/programs/meme-hunter)
+error[E0433]: failed to resolve: could not find `program_error` in `pinocchio`
+  --> programs/meme-hunter/src/lib.rs:84:31
+   |
+84 |         return Err(pinocchio::program_error::INVALID_INSTRUCTION_DATA);
+   |                               ^^^^^^^^^^^^^ could not find `program_error` in `pinocchio`
+
+error[E0433]: failed to resolve: could not find `program_error` in `pinocchio`
+  --> programs/meme-hunter/src/lib.rs:88:33
+   |
+88 |         .map_err(|_| pinocchio::program_error::INVALID_INSTRUCTION_DATA)?;
+   |                                 ^^^^^^^^^^^^^ could not find `program_error` in `pinocchio`
+
+error[E0433]: failed to resolve: could not find `program_error` in `pinocchio`
+   --> programs/meme-hunter/src/lib.rs:130:31
+    |
+130 |         return Err(pinocchio::program_error::NOT_ENOUGH_ACCOUNT_KEYS);
+    |                               ^^^^^^^^^^^^^ could not find `program_error` in `pinocchio`
+
+error[E0433]: failed to resolve: could not find `program_error` in `pinocchio`
+   --> programs/meme-hunter/src/lib.rs:149:31
+    |
+149 |         return Err(pinocchio::program_error::NOT_ENOUGH_ACCOUNT_KEYS);
+    |                               ^^^^^^^^^^^^^ could not find `program_error` in `pinocchio`
+
+error[E0433]: failed to resolve: could not find `program_error` in `pinocchio`
+   --> programs/meme-hunter/src/lib.rs:167:31
+    |
+167 |         return Err(pinocchio::program_error::NOT_ENOUGH_ACCOUNT_KEYS);
+    |                               ^^^^^^^^^^^^^ could not find `program_error` in `pinocchio`
+
+error[E0433]: failed to resolve: could not find `program_error` in `pinocchio`
+   --> programs/meme-hunter/src/lib.rs:184:31
+    |
+184 |         return Err(pinocchio::program_error::NOT_ENOUGH_ACCOUNT_KEYS);
+    |                               ^^^^^^^^^^^^^ could not find `program_error` in `pinocchio`
+
+error[E0433]: failed to resolve: could not find `program_error` in `pinocchio`
+   --> programs/meme-hunter/src/lib.rs:208:31
+    |
+208 |         return Err(pinocchio::program_error::NOT_ENOUGH_ACCOUNT_KEYS);
+    |                               ^^^^^^^^^^^^^ could not find `program_error` in `pinocchio`
+
+error[E0433]: failed to resolve: could not find `program_error` in `pinocchio`
+   --> programs/meme-hunter/src/lib.rs:213:31
+    |
+213 |         return Err(pinocchio::program_error::INVALID_INSTRUCTION_DATA);
+    |                               ^^^^^^^^^^^^^ could not find `program_error` in `pinocchio`
+
+error[E0433]: failed to resolve: could not find `program_error` in `pinocchio`
+   --> programs/meme-hunter/src/lib.rs:222:31
+    |
+222 |         return Err(pinocchio::program_error::INVALID_INSTRUCTION_DATA);
+    |                               ^^^^^^^^^^^^^ could not find `program_error` in `pinocchio`
+
+error[E0433]: failed to resolve: could not find `program_error` in `pinocchio`
+   --> programs/meme-hunter/src/lib.rs:227:31
+    |
+227 |         return Err(pinocchio::program_error::INVALID_INSTRUCTION_DATA);
+    |                               ^^^^^^^^^^^^^ could not find `program_error` in `pinocchio`
+
+warning: unexpected `cfg` condition value: `solana`
+  --> programs/meme-hunter/src/lib.rs:11:1
+   |
+11 | nostd_panic_handler!();
+   | ^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: expected values for `target_os` are: `aix`, `amdhsa`, `android`, `cuda`, `cygwin`, `dragonfly`, `emscripten`, `espidf`, `freebsd`, `fuchsia`, `haiku`, `helenos`, `hermit`, `horizon`, `hurd`, `illumos`, `ios`, `l4re`, `linux`, `lynxos178`, `macos`, `managarm`, `motor`, `netbsd`, `none`, `nto`, `nuttx`, `openbsd`, `psp`, `psx`, `qurt`, `redox`, `rtems`, `solaris`, and `solid_asp3` and 14 more
+   = note: using a cfg inside a macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `nostd_panic_handler` crate for guidance on how handle this unexpected cfg
+   = help: the macro `nostd_panic_handler` may come from an old version of the `pinocchio` crate, try updating your dependency with `cargo update -p pinocchio`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+   = note: `#[warn(unexpected_cfgs)]` on by default
+   = note: this warning originates in the macro `nostd_panic_handler` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unexpected `cfg` condition value: `solana`
+  --> programs/meme-hunter/src/lib.rs:11:1
+   |
+11 | nostd_panic_handler!();
+   | ^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: expected values for `target_os` are: `aix`, `amdhsa`, `android`, `cuda`, `cygwin`, `dragonfly`, `emscripten`, `espidf`, `freebsd`, `fuchsia`, `haiku`, `helenos`, `hermit`, `horizon`, `hurd`, `illumos`, `ios`, `l4re`, `linux`, `lynxos178`, `macos`, `managarm`, `motor`, `netbsd`, `none`, `nto`, `nuttx`, `openbsd`, `psp`, `psx`, `qurt`, `redox`, `rtems`, `solaris`, and `solid_asp3` and 14 more
+   = note: using a cfg inside a macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `nostd_panic_handler` crate for guidance on how handle this unexpected cfg
+   = help: the macro `nostd_panic_handler` may come from an old version of the `pinocchio` crate, try updating your dependency with `cargo update -p pinocchio`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+   = note: this warning originates in the macro `nostd_panic_handler` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unexpected `cfg` condition value: `solana`
+  --> programs/meme-hunter/src/lib.rs:12:1
+   |
+12 | no_allocator!();
+   | ^^^^^^^^^^^^^^^
+   |
+   = note: expected values for `target_os` are: `aix`, `amdhsa`, `android`, `cuda`, `cygwin`, `dragonfly`, `emscripten`, `espidf`, `freebsd`, `fuchsia`, `haiku`, `helenos`, `hermit`, `horizon`, `hurd`, `illumos`, `ios`, `l4re`, `linux`, `lynxos178`, `macos`, `managarm`, `motor`, `netbsd`, `none`, `nto`, `nuttx`, `openbsd`, `psp`, `psx`, `qurt`, `redox`, `rtems`, `solaris`, and `solid_asp3` and 14 more
+   = note: using a cfg inside a macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `no_allocator` crate for guidance on how handle this unexpected cfg
+   = help: the macro `no_allocator` may come from an old version of the `pinocchio` crate, try updating your dependency with `cargo update -p pinocchio`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+   = note: this warning originates in the macro `no_allocator` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+For more information about this error, try `rustc --explain E0433`.
+warning: `meme-hunter` (lib) generated 4 warnings (1 duplicate)
+error: could not compile `meme-hunter` (lib) due to 10 previous errors; 4 warnings emitted

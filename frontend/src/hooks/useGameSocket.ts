@@ -1,7 +1,8 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useAccount, useBalance } from 'wagmi';
-import { WS_URL } from '../config/wagmi';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { WS_URL } from '../config/solana';
 
 export interface Player {
   address: string;
@@ -46,14 +47,26 @@ export interface LeaderboardEntry {
 }
 
 export function useGameSocket() {
-  const { address } = useAccount();
-  const { data: balance } = useBalance({ address });
+  const { publicKey } = useWallet();
+  const address = publicKey?.toBase58();
+  const { connection } = useConnection();
+  const [balance, setBalance] = useState<string>('0');
+  
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [players, setPlayers] = useState<Player[]>([]);
   const [remoteActions, setRemoteActions] = useState<NetAction[]>([]);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+
+  // Fetch balance for socket handshake
+  useEffect(() => {
+    if (publicKey) {
+      connection.getBalance(publicKey).then(lamports => {
+        setBalance((lamports / LAMPORTS_PER_SOL).toFixed(3));
+      }).catch(e => console.error(e));
+    }
+  }, [publicKey, connection]);
 
   // 连接 WebSocket
   useEffect(() => {
@@ -73,7 +86,7 @@ export function useGameSocket() {
       // 加入游戏
       socket.emit('join', {
         address,
-        balance: balance?.formatted || '0',
+        balance: balance,
       });
       
       // 请求初始排行榜（必须在连接建立后发送）
@@ -162,7 +175,7 @@ export function useGameSocket() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [address, balance?.formatted]);
+  }, [address, balance]);
 
   // 发送捕网动作
   const emitNetLaunch = useCallback((x: number, y: number, netSize: number) => {

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useAccount } from 'wagmi';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useGameSocket } from '../../hooks/useGameSocket';
 
 // 网风格颜色
@@ -14,7 +14,8 @@ const NET_COLORS = [
 
 export default function PlayerBar() {
   const { t } = useTranslation();
-  const { address: currentAddress } = useAccount();
+  const { publicKey } = useWallet();
+  const currentAddress = publicKey?.toBase58();
   const { players, isConnected } = useGameSocket();
 
   return (

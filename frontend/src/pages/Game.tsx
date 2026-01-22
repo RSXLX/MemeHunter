@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAccount, useBalance } from 'wagmi';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { useTranslation } from 'react-i18next';
 import GameCanvas from '../components/game/GameCanvas';
 import ControlBar from '../components/game/ControlBar';
@@ -8,7 +8,10 @@ import PlayerBar from '../components/game/PlayerBar';
 import GameSidebar from '../components/game/GameSidebar';
 import LanguageSwitcher from '../components/common/LanguageSwitcher';
 import { NET_CONFIG } from '../utils/constants';
-import { useSessionKey } from '../hooks/useSessionKey';
+import { useRoomInfo } from '../hooks/useRoomInfo';
+import { useSolanaSession } from '../hooks/useSolanaSession';
+
+
 import type { HuntRecord } from '../components/game/HuntHistoryPanel';
 import logoImage from '../assets/logo.png';
 
@@ -21,9 +24,22 @@ interface HuntStats {
 export default function Game() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { address } = useAccount();
-  const { data: balance, refetch: refetchBalance } = useBalance({ address });
-  const { isValid: hasSessionKey, remainingTime } = useSessionKey();
+  const { publicKey: address } = useWallet();
+  const { connection } = useConnection();
+  const { formattedRemaining, loading: roomLoading } = useRoomInfo();
+  
+  // Custom Balance Hook Logic (Simplified)
+  const [balance, setBalance] = useState<{formatted: string} | null>(null);
+  const refetchBalance = useCallback(async () => {
+    if (address) {
+       const lamports = await connection.getBalance(address);
+       setBalance({ formatted: (lamports / 1000000000).toFixed(3) });
+    }
+  }, [address, connection]);
+
+  useEffect(() => { refetchBalance(); }, [refetchBalance]);
+
+  const { isValid: hasSessionKey, remainingTime } = useSolanaSession();
   const [selectedNet, setSelectedNet] = useState(1); // 默认中网
   const [stats, setStats] = useState<HuntStats>({
     totalHunts: 0,
@@ -84,10 +100,21 @@ export default function Game() {
           <div className="flex items-center gap-2">
             <span className="text-2xl">💰</span>
             <span className="text-xl font-semibold text-white">
-              {balance ? Number(balance.formatted).toFixed(3) : '0.000'} {t('common.mon')}
+              {balance ? balance.formatted : '0.000'} {t('common.mon')}
             </span>
           </div>
           
+          {/* Room Pool Info */}
+          <div className="flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/30 rounded-lg mr-4">
+             <span className="text-lg">🏦</span>
+             <div className="flex flex-col leading-none">
+               <span className="text-[10px] text-blue-300">POOL</span>
+               <span className="text-sm font-mono font-bold text-blue-400">
+                 {roomLoading ? '---' : formattedRemaining}
+               </span>
+             </div>
+          </div>
+
           {/* 狩猎统计 */}
           <div className="flex items-center gap-4 text-sm">
             <span className="text-gray-400">

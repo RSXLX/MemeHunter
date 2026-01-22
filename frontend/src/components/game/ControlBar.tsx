@@ -48,10 +48,10 @@ export default function ControlBar({ selectedNet, onSelectNet, netConfig }: Cont
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4">
           <span className="text-gray-400">{t('controlBar.cost')}:</span>
           <span className="text-xl font-semibold text-monad-cyan">
-            {netConfig[selectedNet]?.cost || 0.01} MON
+            {netConfig[selectedNet]?.cost || 100} TOKENS
           </span>
           <span className="text-gray-500">{t('controlBar.perHunt')}</span>
         </div>

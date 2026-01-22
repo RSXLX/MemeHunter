@@ -1,0 +1,72 @@
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/programs/meme-hunter/Cargo.toml
+workspace: /mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/Cargo.toml
+    Checking meme-hunter v0.1.0 (/mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/programs/meme-hunter)
+warning: unexpected `cfg` condition value: `solana`
+ --> programs/meme-hunter/src/lib.rs:5:1
+  |
+5 | nostd_panic_handler!();
+  | ^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: expected values for `target_os` are: `aix`, `amdhsa`, `android`, `cuda`, `cygwin`, `dragonfly`, `emscripten`, `espidf`, `freebsd`, `fuchsia`, `haiku`, `helenos`, `hermit`, `horizon`, `hurd`, `illumos`, `ios`, `l4re`, `linux`, `lynxos178`, `macos`, `managarm`, `motor`, `netbsd`, `none`, `nto`, `nuttx`, `openbsd`, `psp`, `psx`, `qurt`, `redox`, `rtems`, `solaris`, and `solid_asp3` and 14 more
+  = note: using a cfg inside a macro will use the cfgs from the destination crate and not the ones from the defining crate
+  = help: try referring to `nostd_panic_handler` crate for guidance on how handle this unexpected cfg
+  = help: the macro `nostd_panic_handler` may come from an old version of the `pinocchio` crate, try updating your dependency with `cargo update -p pinocchio`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+  = note: `#[warn(unexpected_cfgs)]` on by default
+  = note: this warning originates in the macro `nostd_panic_handler` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unexpected `cfg` condition value: `solana`
+ --> programs/meme-hunter/src/lib.rs:5:1
+  |
+5 | nostd_panic_handler!();
+  | ^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: expected values for `target_os` are: `aix`, `amdhsa`, `android`, `cuda`, `cygwin`, `dragonfly`, `emscripten`, `espidf`, `freebsd`, `fuchsia`, `haiku`, `helenos`, `hermit`, `horizon`, `hurd`, `illumos`, `ios`, `l4re`, `linux`, `lynxos178`, `macos`, `managarm`, `motor`, `netbsd`, `none`, `nto`, `nuttx`, `openbsd`, `psp`, `psx`, `qurt`, `redox`, `rtems`, `solaris`, and `solid_asp3` and 14 more
+  = note: using a cfg inside a macro will use the cfgs from the destination crate and not the ones from the defining crate
+  = help: try referring to `nostd_panic_handler` crate for guidance on how handle this unexpected cfg
+  = help: the macro `nostd_panic_handler` may come from an old version of the `pinocchio` crate, try updating your dependency with `cargo update -p pinocchio`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+  = note: this warning originates in the macro `nostd_panic_handler` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unexpected `cfg` condition value: `solana`
+ --> programs/meme-hunter/src/lib.rs:6:1
+  |
+6 | no_allocator!();
+  | ^^^^^^^^^^^^^^^
+  |
+  = note: expected values for `target_os` are: `aix`, `amdhsa`, `android`, `cuda`, `cygwin`, `dragonfly`, `emscripten`, `espidf`, `freebsd`, `fuchsia`, `haiku`, `helenos`, `hermit`, `horizon`, `hurd`, `illumos`, `ios`, `l4re`, `linux`, `lynxos178`, `macos`, `managarm`, `motor`, `netbsd`, `none`, `nto`, `nuttx`, `openbsd`, `psp`, `psx`, `qurt`, `redox`, `rtems`, `solaris`, and `solid_asp3` and 14 more
+  = note: using a cfg inside a macro will use the cfgs from the destination crate and not the ones from the defining crate
+  = help: try referring to `no_allocator` crate for guidance on how handle this unexpected cfg
+  = help: the macro `no_allocator` may come from an old version of the `pinocchio` crate, try updating your dependency with `cargo update -p pinocchio`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+  = note: this warning originates in the macro `no_allocator` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unused macro definition: `log`
+  --> programs/meme-hunter/src/lib.rs:17:14
+   |
+17 | macro_rules! log {
+   |              ^^^
+   |
+   = note: `#[warn(unused_macros)]` (part of `#[warn(unused)]`) on by default
+
+error[E0308]: mismatched types
+   --> programs/meme-hunter/src/lib.rs:21:21
+    |
+ 21 | program_entrypoint!(process_instruction);
+    | --------------------^^^^^^^^^^^^^^^^^^^-
+    | |                   |
+    | |                   expected fn pointer, found fn item
+    | arguments to this function are incorrect
+    |
+    = note: expected fn pointer `for<'a, 'b, 'c> fn(&'a Address, &'b _, &'c _) -> Result<_, ProgramError>`
+                  found fn item `for<'a, 'b, 'c> fn(&'a Address, &'b _, &'c _) -> Result<_, u64> {process_instruction}`
+note: function defined here
+   --> /home/sxlx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pinocchio-0.10.1/src/entrypoint/mod.rs:179:15
+    |
+179 | pub unsafe fn process_entrypoint<const MAX_ACCOUNTS: usize>(
+    |               ^^^^^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0308`.
+warning: `meme-hunter` (lib) generated 5 warnings (1 duplicate)
+error: could not compile `meme-hunter` (lib) due to 1 previous error; 5 warnings emitted

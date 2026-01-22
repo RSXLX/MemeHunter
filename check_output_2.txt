@@ -1,0 +1,24 @@
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/programs/meme-hunter/Cargo.toml
+workspace: /mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/Cargo.toml
+    Checking meme-hunter v0.1.0 (/mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/programs/meme-hunter)
+error[E0609]: no field `data` on type `&AccountInfo`
+   --> programs/meme-hunter/src/lib.rs:143:32
+    |
+143 |             &mut *(session_pda.data.borrow_mut().as_ptr() as *mut SessionToken) 
+    |                                ^^^^ unknown field
+
+error[E0609]: no field `data` on type `&AccountInfo`
+   --> programs/meme-hunter/src/lib.rs:180:32
+    |
+180 |             &mut *(session_pda.data.borrow_mut().as_ptr() as *mut SessionToken) 
+    |                                ^^^^ unknown field
+
+error[E0609]: no field `data` on type `&AccountInfo`
+   --> programs/meme-hunter/src/lib.rs:231:24
+    |
+231 |         &*(session_pda.data.borrow().as_ptr() as *const SessionToken) 
+    |                        ^^^^ unknown field
+
+For more information about this error, try `rustc --explain E0609`.
+error: could not compile `meme-hunter` (lib) due to 3 previous errors

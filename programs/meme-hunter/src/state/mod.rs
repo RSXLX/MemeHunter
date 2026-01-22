@@ -1,7 +1,5 @@
-pub mod game_config;
+pub mod room;
 pub mod session;
-pub mod slot_stats;
 
-pub use game_config::*;
+pub use room::*;
 pub use session::*;
-pub use slot_stats::*;

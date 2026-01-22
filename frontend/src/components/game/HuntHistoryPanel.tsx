@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { monadTestnet } from '../../config/wagmi';
 
 export interface HuntRecord {
   id: string;
@@ -29,8 +28,7 @@ export default function HuntHistoryPanel({ history, className = '' }: HuntHistor
 
   const openExplorer = (txHash?: string) => {
     if (!txHash) return;
-    const explorerUrl = monadTestnet.blockExplorers?.default.url;
-    window.open(`${explorerUrl}/tx/${txHash}`, '_blank');
+    window.open(`https://explorer.solana.com/tx/${txHash}?cluster=devnet`, '_blank');
   };
 
   if (history.length === 0) {

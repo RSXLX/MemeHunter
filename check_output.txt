@@ -1,0 +1,65 @@
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/programs/meme-hunter/Cargo.toml
+workspace: /mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/Cargo.toml
+    Checking meme-hunter v0.1.0 (/mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/programs/meme-hunter)
+warning: the item `TryInto` is imported redundantly
+  --> programs/meme-hunter/src/lib.rs:12:5
+   |
+12 | use core::convert::TryInto;
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+   |
+  ::: /home/sxlx/.rustup/toolchains/nightly-2024-04-01-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/prelude/mod.rs:65:39
+   |
+65 |     pub use crate::convert::{TryFrom, TryInto};
+   |                                       ------- the item `TryInto` is already defined here
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+error[E0599]: no function or associated item named `find_program_address` found for array `[u8; 32]` in the current scope
+   --> programs/meme-hunter/src/lib.rs:131:40
+    |
+131 |     let (derived_pda, _bump) = Pubkey::find_program_address(
+    |                                        ^^^^^^^^^^^^^^^^^^^^ function or associated item not found in `[u8; 32]`
+
+error[E0599]: no method named `borrow_mut_data` found for reference `&AccountInfo` in the current scope
+   --> programs/meme-hunter/src/lib.rs:145:32
+    |
+145 |             &mut *(session_pda.borrow_mut_data().unwrap().as_ptr() as *mut SessionToken) 
+    |                                ^^^^^^^^^^^^^^^
+    |
+help: there is a method `can_borrow_mut_data` with a similar name
+    |
+145 |             &mut *(session_pda.can_borrow_mut_data().unwrap().as_ptr() as *mut SessionToken) 
+    |                                ~~~~~~~~~~~~~~~~~~~
+
+error[E0599]: no method named `borrow_mut_data` found for reference `&AccountInfo` in the current scope
+   --> programs/meme-hunter/src/lib.rs:182:32
+    |
+182 |             &mut *(session_pda.borrow_mut_data().unwrap().as_ptr() as *mut SessionToken) 
+    |                                ^^^^^^^^^^^^^^^
+    |
+help: there is a method `can_borrow_mut_data` with a similar name
+    |
+182 |             &mut *(session_pda.can_borrow_mut_data().unwrap().as_ptr() as *mut SessionToken) 
+    |                                ~~~~~~~~~~~~~~~~~~~
+
+error[E0599]: no function or associated item named `find_program_address` found for array `[u8; 32]` in the current scope
+   --> programs/meme-hunter/src/lib.rs:218:40
+    |
+218 |     let (derived_pda, _bump) = Pubkey::find_program_address(
+    |                                        ^^^^^^^^^^^^^^^^^^^^ function or associated item not found in `[u8; 32]`
+
+error[E0599]: no method named `borrow_data` found for reference `&AccountInfo` in the current scope
+   --> programs/meme-hunter/src/lib.rs:233:24
+    |
+233 |         &*(session_pda.borrow_data().unwrap().as_ptr() as *const SessionToken) 
+    |                        ^^^^^^^^^^^
+    |
+help: there is a method `can_borrow_data` with a similar name
+    |
+233 |         &*(session_pda.can_borrow_data().unwrap().as_ptr() as *const SessionToken) 
+    |                        ~~~~~~~~~~~~~~~
+
+For more information about this error, try `rustc --explain E0599`.
+warning: `meme-hunter` (lib) generated 1 warning
+error: could not compile `meme-hunter` (lib) due to 5 previous errors; 1 warning emitted

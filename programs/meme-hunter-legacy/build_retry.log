@@ -1,0 +1,18 @@
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/programs/meme-hunter/Cargo.toml
+workspace: /mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/Cargo.toml
+    Updating crates.io index
+error: failed to select a version for `solana-svm-feature-set`.
+    ... required by package `agave-feature-set v3.1.7`
+    ... which satisfies dependency `agave-feature-set = "^3.1.0"` of package `mollusk-svm v0.10.0`
+    ... which satisfies dependency `mollusk-svm = "^0.10.0"` of package `meme-hunter v0.1.0 (/mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/programs/meme-hunter)`
+versions that meet the requirements `=3.1.7` are: 3.1.7
+
+all possible versions conflict with previously selected packages.
+
+  previously selected package `solana-svm-feature-set v3.1.1`
+    ... which satisfies dependency `solana-svm-feature-set = "=3.1.1"` of package `agave-syscalls v3.1.1`
+    ... which satisfies dependency `agave-syscalls = "^3.1.0"` of package `mollusk-svm v0.10.0`
+    ... which satisfies dependency `mollusk-svm = "^0.10.0"` of package `meme-hunter v0.1.0 (/mnt/c/Users/94447/Desktop/crypto/Monad/MemeHunter/programs/meme-hunter)`
+
+failed to select a version for `solana-svm-feature-set` which could resolve this conflict

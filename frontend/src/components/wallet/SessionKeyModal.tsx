@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSessionKey } from '../../hooks/useSessionKey';
+import { useSolanaSession } from '../../hooks/useSolanaSession';
 
 interface SessionKeyModalProps {
   isOpen: boolean;
@@ -19,7 +19,7 @@ export default function SessionKeyModal({ isOpen, onClose, onSuccess }: SessionK
     error, 
     authorizeSessionKey,
     revokeSessionKey,
-  } = useSessionKey();
+  } = useSolanaSession();
 
   const [agreed, setAgreed] = useState(false);
 
@@ -62,7 +62,11 @@ export default function SessionKeyModal({ isOpen, onClose, onSuccess }: SessionK
                 <span className="font-semibold">{t('sessionModal.active').replace('✅ ', '')}</span>
               </div>
               <div className="text-sm text-gray-400 space-y-1">
-                <p>{t('sessionModal.address')}: <code className="text-green-300">{sessionKey.address.slice(0, 10)}...{sessionKey.address.slice(-8)}</code></p>
+                <p>{t('sessionModal.address')}: 
+                  <span className="font-mono bg-black/50 px-2 py-0.5 rounded text-yellow-500/80">
+                    {sessionKey.publicKey.toBase58().slice(0, 4)}...{sessionKey.publicKey.toBase58().slice(-4)}
+                  </span>
+                </p>
                 <p>{t('sessionModal.remaining')}: <span className="text-green-300">{formatTime(remainingTime)}</span></p>
               </div>
             </div>
