@@ -1,15 +1,10 @@
 import { useState, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-// import { useWallet } from '@solana/wallet-adapter-react';
-// import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
-// import * as anchor from '@coral-xyz/anchor';
-// import { getAssociatedTokenAddress } from '@solana/spl-token';
-// import { useAnchorProgram } from '../../hooks/useAnchorProgram';
-// import { PROGRAM_ID } from '../../config/solana';
-// import { DEFAULT_TOKEN_MINT } from '../../config/solana';
-
-// Mock Constants
-const DEFAULT_TOKEN_MINT = { toBase58: () => "MockTokenMintAddress123" };
+import { useNavigate } from 'react-router-dom';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { API_BASE_URL, getSessionId } from '../../config/api';
+import { useSolanaProgram } from '../../hooks/useSolanaProgram';
+import { isValidSolanaAddress, shortenAddress } from '../../utils/solana';
 
 interface CreateRoomModalProps {
   isOpen: boolean;
@@ -18,72 +13,92 @@ interface CreateRoomModalProps {
 }
 
 export default function CreateRoomModal({ isOpen, onClose, onSuccess }: CreateRoomModalProps) {
-  // const { publicKey } = useWallet();
-  // const { program } = useAnchorProgram();
-  // const program = true; // Mock program existence
+  const navigate = useNavigate();
+  const { publicKey, connected } = useWallet();
+  const { createRoom: createRoomOnChain, loading: chainLoading } = useSolanaProgram();
 
-  const [amount, setAmount] = useState('100');
-  const [tokenMint, setTokenMint] = useState(DEFAULT_TOKEN_MINT.toBase58());
+  const [roomName, setRoomName] = useState('');
+  const [tokenSymbol, setTokenSymbol] = useState('MEME');
+  const [tokenMint, setTokenMint] = useState(''); // SPL Token Mint 地址
+  const [initialDeposit, setInitialDeposit] = useState('1000');
+  const [useOnChain, setUseOnChain] = useState(false); // 是否使用链上创建
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState<'form' | 'signing' | 'confirming'>('form');
 
   const handleCreateRoom = async () => {
-    // if (!publicKey || !program) return;
-
     setIsCreating(true);
     setError(null);
 
     try {
-      // Mock Network Delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const sessionId = getSessionId();
+      if (!sessionId) {
+        throw new Error('请先登录');
+      }
 
-      /* 
-      // Original Web3 Logic - Commented out for UI Refactor Verification due to build dependency issues
-      const mintPubkey = new PublicKey(tokenMint);
-      const amountBN = new anchor.BN(parseFloat(amount) * 1e9); // Assuming 9 decimals for now
+      let roomPda: string | undefined;
 
-      // Derive PDAs
-      const [gameConfigPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("game_config")],
-        PROGRAM_ID
-      );
+      // 如果启用链上创建
+      if (useOnChain && connected) {
+        if (!tokenMint || !isValidSolanaAddress(tokenMint)) {
+          throw new Error('请输入有效的 SPL Token Mint 地址');
+        }
 
-      const [roomPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("room"), publicKey.toBuffer(), mintPubkey.toBuffer()],
-        PROGRAM_ID
-      );
+        setStep('signing');
+        
+        const chainResult = await createRoomOnChain({
+          tokenMint,
+          amount: initialDeposit,
+        });
 
-      const [roomVaultPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("vault"), roomPda.toBuffer()],
-        PROGRAM_ID
-      );
+        if (!chainResult.success) {
+          throw new Error(chainResult.error || '链上创建失败');
+        }
 
-      const creatorTokenAccount = await getAssociatedTokenAddress(mintPubkey, publicKey);
+        roomPda = chainResult.roomPda;
+        setStep('confirming');
+        console.log('✅ Chain room created:', roomPda, 'TX:', chainResult.signature);
+      }
 
-      await program.methods
-        .createRoom(amountBN)
-        .accounts({
-          creator: publicKey,
-          gameConfig: gameConfigPda,
-          tokenMint: mintPubkey,
-          creatorTokenAccount: creatorTokenAccount,
-          room: roomPda,
-          roomVault: roomVaultPda,
-          systemProgram: SystemProgram.programId,
-          tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
-          rent: SYSVAR_RENT_PUBKEY,
-        })
-        .rpc();
-      */
+      // 创建后端房间记录
+      const response = await fetch(`${API_BASE_URL}/rooms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Id': sessionId,
+        },
+        body: JSON.stringify({
+          name: roomName || undefined,
+          tokenSymbol: tokenSymbol || 'MEME',
+          tokenMint: tokenMint || undefined,
+          roomPda: roomPda,
+          initialDeposit: parseFloat(initialDeposit) || 0,
+          maxPlayers: 10,
+          memeCount: 8,
+          isOnChain: useOnChain && connected,
+        }),
+      });
 
-      console.log('Room created successfully! (MOCKED)');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || '创建房间失败');
+      }
+
+      console.log('✅ Room created:', data.room);
       onSuccess?.();
       onClose();
+      
+      // 跳转到新创建的房间
+      if (data.room?.id) {
+        navigate(`/game/${data.room.id}`);
+      }
     } catch (err: any) {
       console.error('Failed to create room:', err);
-      setError(err.message || 'Failed to create room');
+      setError(err.message || '创建房间失败');
     } finally {
       setIsCreating(false);
+      setStep('form');
     }
   };
 
@@ -128,29 +143,90 @@ export default function CreateRoomModal({ isOpen, onClose, onSuccess }: CreateRo
                   <div className="space-y-6">
                     <div>
                       <label className="block text-xs font-bold text-secondary uppercase tracking-widest mb-2">
-                        Token Mint Address
+                        房间名称
                       </label>
                       <input
                         type="text"
                         className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm transition-all"
-                        value={tokenMint}
-                        onChange={(e) => setTokenMint(e.target.value)}
-                        placeholder="Enter Token Mint Address"
+                        value={roomName}
+                        onChange={(e) => setRoomName(e.target.value)}
+                        placeholder="可选，留空自动生成"
                       />
                     </div>
 
                     <div>
                       <label className="block text-xs font-bold text-secondary uppercase tracking-widest mb-2">
-                        Deposit Amount
+                        代币符号
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm transition-all"
+                        value={tokenSymbol}
+                        onChange={(e) => setTokenSymbol(e.target.value)}
+                        placeholder="MEME"
+                      />
+                    </div>
+
+                    {/* 链上创建开关 */}
+                    <div className="flex items-center justify-between p-3 bg-black/20 rounded-lg border border-white/5">
+                      <div>
+                        <label className="text-sm font-bold text-white">链上创建房间</label>
+                        <p className="text-xs text-text/50 mt-1">
+                          {connected ? '连接钱包后可存入真实代币' : '请先连接钱包'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setUseOnChain(!useOnChain)}
+                        disabled={!connected}
+                        className={`relative w-12 h-6 rounded-full transition-colors ${
+                          useOnChain && connected ? 'bg-primary' : 'bg-white/10'
+                        } ${!connected ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <span
+                          className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                            useOnChain && connected ? 'translate-x-6' : ''
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Token Mint 地址 (仅链上创建时显示) */}
+                    {useOnChain && connected && (
+                      <div>
+                        <label className="block text-xs font-bold text-secondary uppercase tracking-widest mb-2">
+                          SPL Token Mint 地址
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-mono text-xs transition-all"
+                          value={tokenMint}
+                          onChange={(e) => setTokenMint(e.target.value)}
+                          placeholder="输入 SPL Token 的 Mint 地址"
+                        />
+                        {tokenMint && !isValidSolanaAddress(tokenMint) && (
+                          <p className="text-cta text-xs mt-1">无效的 Solana 地址</p>
+                        )}
+                        {connected && publicKey && (
+                          <p className="text-text/40 text-xs mt-2 font-mono">
+                            创建者: {shortenAddress(publicKey.toString())}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-xs font-bold text-secondary uppercase tracking-widest mb-2">
+                        初始奖池
                       </label>
                       <div className="relative group">
                         <input
                           type="number"
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-display text-lg tracking-wide transition-all"
-                          value={amount}
-                          onChange={(e) => setAmount(e.target.value)}
+                          value={initialDeposit}
+                          onChange={(e) => setInitialDeposit(e.target.value)}
                         />
-                        <span className="absolute right-4 top-3.5 text-text/40 text-xs font-bold pointer-events-none group-focus-within:text-primary transition-colors">TOKENS</span>
+                        <span className="absolute right-4 top-3.5 text-text/40 text-xs font-bold pointer-events-none group-focus-within:text-primary transition-colors">{tokenSymbol}</span>
                       </div>
                     </div>
 

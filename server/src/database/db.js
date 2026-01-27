@@ -31,6 +31,7 @@ db.exec(`
     wallet_address TEXT,
     balance INTEGER DEFAULT 0,
     total_earned INTEGER DEFAULT 0,
+    total_withdrawn INTEGER DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
   );
@@ -42,6 +43,7 @@ db.exec(`
     name TEXT NOT NULL,
     token_symbol TEXT NOT NULL,
     pool_balance INTEGER DEFAULT 0,
+    creator_deposit INTEGER DEFAULT 0,
     max_players INTEGER DEFAULT 10,
     meme_count INTEGER DEFAULT 8,
     net_costs TEXT DEFAULT '[0.005, 0.01, 0.02]',
@@ -75,6 +77,17 @@ db.exec(`
     FOREIGN KEY (user_id) REFERENCES users(id)
   );
   
+  -- 房间评论表 (聊天消息)
+  CREATE TABLE IF NOT EXISTS room_comments (
+    id TEXT PRIMARY KEY,
+    room_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (room_id) REFERENCES rooms(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  );
+  
   -- 索引
   CREATE INDEX IF NOT EXISTS idx_users_session ON users(session_id);
   CREATE INDEX IF NOT EXISTS idx_users_wallet ON users(wallet_address);
@@ -82,6 +95,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_withdraw_status ON withdraw_requests(status);
   CREATE INDEX IF NOT EXISTS idx_game_records_room ON game_records(room_id);
   CREATE INDEX IF NOT EXISTS idx_game_records_user ON game_records(user_id);
+  CREATE INDEX IF NOT EXISTS idx_comments_room ON room_comments(room_id);
 `);
 
 console.log('📦 Database initialized:', dbPath);

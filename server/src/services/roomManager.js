@@ -19,11 +19,10 @@ const MEME_CONFIGS = [
 const CANVAS_WIDTH = 1600;
 const CANVAS_HEIGHT = 1200;
 
-// 预编译 SQL 语句
 const stmts = {
     insertRoom: db.prepare(`
-    INSERT INTO rooms (id, creator_id, name, token_symbol, pool_balance, max_players, meme_count, net_costs, status)
-    VALUES (@id, @creatorId, @name, @tokenSymbol, @poolBalance, @maxPlayers, @memeCount, @netCosts, @status)
+    INSERT INTO rooms (id, creator_id, name, token_symbol, pool_balance, max_players, meme_count, net_costs, status, creator_deposit)
+    VALUES (@id, @creatorId, @name, @tokenSymbol, @poolBalance, @maxPlayers, @memeCount, @netCosts, @status, @creatorDeposit)
   `),
 
     getRoomById: db.prepare(`
@@ -45,6 +44,10 @@ const stmts = {
 
     updatePoolBalance: db.prepare(`
     UPDATE rooms SET pool_balance = pool_balance + @amount WHERE id = @id
+  `),
+
+    getRoomsByCreator: db.prepare(`
+    SELECT * FROM rooms WHERE creator_id = ? ORDER BY created_at DESC
   `),
 
     recordGame: db.prepare(`
@@ -74,13 +77,15 @@ class RoomManager {
      */
     createRoom(creatorId, options = {}) {
         const roomId = uuidv4().substring(0, 8).toUpperCase(); // 8位短码
+        const initialDeposit = options.initialDeposit || 0;
 
         const room = {
             id: roomId,
             creatorId: creatorId,
             name: options.name || `Room #${roomId}`,
             tokenSymbol: options.tokenSymbol || 'MEME',
-            poolBalance: options.poolBalance || 0,
+            poolBalance: initialDeposit,
+            creatorDeposit: initialDeposit,
             maxPlayers: options.maxPlayers || 10,
             memeCount: options.memeCount || 8,
             netCosts: JSON.stringify(options.netCosts || [0.005, 0.01, 0.02]),
@@ -133,6 +138,23 @@ class RoomManager {
     updateStatus(roomId, status) {
         stmts.updateRoomStatus.run({ id: roomId, status: status });
         return this.getRoomById(roomId);
+    }
+
+    /**
+     * 项目方投入奖池
+     */
+    depositToPool(roomId, amount) {
+        stmts.updatePoolBalance.run({ id: roomId, amount: amount });
+        console.log(`💰 Deposit to room ${roomId}: +${amount}`);
+        return this.getRoomById(roomId);
+    }
+
+    /**
+     * 获取用户创建的所有房间
+     */
+    getRoomsByCreator(creatorId) {
+        const rooms = stmts.getRoomsByCreator.all(creatorId);
+        return rooms.map(room => this._formatRoom(room));
     }
 
     /**

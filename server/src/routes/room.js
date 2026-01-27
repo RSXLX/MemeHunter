@@ -31,12 +31,34 @@ roomRouter.get('/rooms', optionalSession, (req, res) => {
 });
 
 /**
+ * GET /api/rooms/my
+ * 获取当前用户创建的房间列表
+ */
+roomRouter.get('/rooms/my', requireSession, (req, res) => {
+    try {
+        const rooms = roomManager.getRoomsByCreator(req.user.id);
+
+        res.json({
+            success: true,
+            rooms: rooms,
+            count: rooms.length,
+        });
+    } catch (error) {
+        console.error('Get my rooms error:', error);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: error.message,
+        });
+    }
+});
+
+/**
  * POST /api/rooms
  * 创建房间
  */
 roomRouter.post('/rooms', requireSession, (req, res) => {
     try {
-        const { name, tokenSymbol, maxPlayers, memeCount, netCosts } = req.body;
+        const { name, tokenSymbol, maxPlayers, memeCount, netCosts, initialDeposit } = req.body;
 
         const room = roomManager.createRoom(req.user.id, {
             name: name,
@@ -44,6 +66,7 @@ roomRouter.post('/rooms', requireSession, (req, res) => {
             maxPlayers: maxPlayers || 10,
             memeCount: memeCount || 8,
             netCosts: netCosts,
+            initialDeposit: initialDeposit || 0,
         });
 
         res.status(201).json({
@@ -178,6 +201,57 @@ roomRouter.patch('/rooms/:id/status', requireSession, (req, res) => {
         });
     } catch (error) {
         console.error('Update room status error:', error);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: error.message,
+        });
+    }
+});
+
+/**
+ * POST /api/rooms/:id/deposit
+ * 项目方投入奖池 (仅创建者)
+ */
+roomRouter.post('/rooms/:id/deposit', requireSession, (req, res) => {
+    try {
+        const roomId = req.params.id;
+        const { amount } = req.body;
+
+        // 验证金额
+        if (!amount || amount <= 0) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'Amount must be greater than 0',
+            });
+        }
+
+        const room = roomManager.getRoomById(roomId);
+
+        if (!room) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: 'Room not found',
+            });
+        }
+
+        // 仅创建者可以投入
+        if (room.creatorId !== req.user.id) {
+            return res.status(403).json({
+                error: 'Forbidden',
+                message: 'Only room creator can deposit to pool',
+            });
+        }
+
+        // 增加奖池余额
+        const updatedRoom = roomManager.depositToPool(roomId, amount);
+
+        res.json({
+            success: true,
+            room: updatedRoom,
+            deposited: amount,
+        });
+    } catch (error) {
+        console.error('Deposit to pool error:', error);
         res.status(500).json({
             error: 'Internal Server Error',
             message: error.message,

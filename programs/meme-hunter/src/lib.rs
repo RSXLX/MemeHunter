@@ -23,6 +23,15 @@ pub mod meme_hunter {
         instructions::authorize_session::authorize_session(ctx, duration_secs)
     }
 
-    // hunt 指令已移至后端处理
-    // 后续将新增 claim_reward 用于批量发放奖励
+    /// Claim reward - Relayer 调用发放奖励给用户
+    /// amount: 代币数量 (6 位小数)
+    pub fn claim_reward(ctx: Context<ClaimReward>, amount: u64) -> Result<()> {
+        instructions::claim_reward::claim_reward(ctx, amount)
+    }
+
+    /// Settle room - 项目方结算房间回收剩余代币
+    pub fn settle_room(ctx: Context<SettleRoom>) -> Result<()> {
+        instructions::settle_room::settle_room(ctx)
+    }
 }
+

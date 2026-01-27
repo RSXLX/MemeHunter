@@ -41,20 +41,20 @@ export interface MemePhysicsState {
 const PHYSICS_CONFIG = {
     // 边界内边距
     PADDING: 50,
-    // 基础速度
-    BASE_SPEED: 80,
-    // 速度衰减
-    FRICTION: 0.98,
+    // 基础速度 (恢复至正常速度)
+    BASE_SPEED: 100,
+    // 速度衰减 (降低摩擦力，让移动更持久)
+    FRICTION: 0.99,
     // 边界反弹力
     BOUNCE_FORCE: 0.6,
-    // 软边界距离
-    SOFT_BOUNDARY: 100,
+    // 软边界距离 (缩小，允许靠近边缘)
+    SOFT_BOUNDARY: 60,
     // 轨迹最大长度
     MAX_TRAIL_LENGTH: 20,
     // 轨迹更新间隔（帧数）
     TRAIL_UPDATE_INTERVAL: 3,
     // 游荡目标更新间隔（秒）
-    WANDER_INTERVAL: 2,
+    WANDER_INTERVAL: 4,
 } as const;
 
 /**

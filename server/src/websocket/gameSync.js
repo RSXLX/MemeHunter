@@ -3,6 +3,7 @@
  */
 import { userManager } from '../services/userManager.js';
 import { roomManager, MEME_CONFIGS } from '../services/roomManager.js';
+import { commentService } from '../services/commentService.js';
 import {
   getPlayerState,
   onHuntSuccess,
@@ -248,6 +249,10 @@ export function initWebSocket(io) {
           netLevel: successState.netLevel,
         });
 
+        // 广播排行榜更新
+        const leaderboard = userManager.getLeaderboard(10);
+        io.to(userData.roomId).emit('leaderboardUpdate', leaderboard);
+
       } else {
         // 逃脱 - 连击重置
         const failState = onHuntFail(socket.id);
@@ -276,6 +281,58 @@ export function initWebSocket(io) {
           balance: user.balance,
           totalEarned: user.totalEarned,
         });
+      }
+    });
+
+    // ========== 发送评论 ==========
+    socket.on('sendComment', ({ content }) => {
+      const userData = socketUserMap.get(socket.id);
+      if (!userData?.user || !userData.roomId) return;
+
+      try {
+        // 保存评论到数据库
+        const comment = commentService.addComment(
+          userData.roomId,
+          userData.user.id,
+          content
+        );
+
+        // 广播给房间内所有用户
+        const formattedComment = {
+          id: comment.id,
+          sender: userData.user.nickname,
+          userId: userData.user.id,
+          content: comment.content,
+          timestamp: Date.now(),
+          isSystem: false,
+        };
+
+        io.to(userData.roomId).emit('newComment', formattedComment);
+        console.log(`💬 ${userData.user.nickname}: ${content.slice(0, 30)}...`);
+      } catch (error) {
+        socket.emit('error', { message: error.message });
+      }
+    });
+
+    // ========== 获取评论历史 ==========
+    socket.on('getCommentHistory', () => {
+      const userData = socketUserMap.get(socket.id);
+      if (!userData?.roomId) return;
+
+      try {
+        const comments = commentService.getRecentComments(userData.roomId, 50);
+        const formattedComments = comments.map(c => ({
+          id: c.id,
+          sender: c.nickname,
+          userId: c.userId,
+          content: c.content,
+          timestamp: c.timestamp,
+          isSystem: false,
+        }));
+
+        socket.emit('commentHistory', formattedComments);
+      } catch (error) {
+        socket.emit('error', { message: error.message });
       }
     });
 

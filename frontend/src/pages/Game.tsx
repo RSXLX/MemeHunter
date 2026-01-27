@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect, Component, type ReactNode, type ErrorInfo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useGuestAuth } from '../hooks/useGuestAuth';
+import { API_BASE_URL, getSessionId } from '../config/api';
 import { useTranslation } from 'react-i18next';
 import GameCanvas from '../components/game/GameCanvas';
 import ControlBar from '../components/game/ControlBar';
@@ -7,6 +9,7 @@ import PlayerBar from '../components/game/PlayerBar';
 import GameSidebar from '../components/game/GameSidebar';
 import LanguageSwitcher from '../components/common/LanguageSwitcher';
 import QRCodeShare from '../components/room/QRCodeShare';
+import WithdrawModal from '../components/game/WithdrawModal';
 
 import type { HuntRecord } from '../components/game/HuntHistoryPanel';
 
@@ -86,16 +89,50 @@ export default function Game() {
     }
   }, [routeRoomId, currentRoomId]);
 
-  // MOCK DATA for Frontend-only mode
-  const [balance, setBalance] = useState<{ formatted: string }>({ formatted: '1000.000' });
-  const formattedRemaining = '50000.00';
-  const roomLoading = false;
-  const hasSessionKey = true;
+  // 使用真实数据
+  const { balance, isAuthenticated } = useGuestAuth();
+  const [roomInfo, setRoomInfo] = useState<{ poolBalance: number; tokenSymbol: string } | null>(null);
+  const [roomLoading, setRoomLoading] = useState(true);
+
+  // 获取房间信息
+  useEffect(() => {
+    const fetchRoomInfo = async () => {
+      if (!currentRoomId || currentRoomId === 'default') {
+        setRoomLoading(false);
+        return;
+      }
+      try {
+        const sessionId = getSessionId();
+        const headers: Record<string, string> = {};
+        if (sessionId) headers['X-Session-Id'] = sessionId;
+        
+        const res = await fetch(`${API_BASE_URL}/rooms/${currentRoomId}`, { headers });
+        const data = await res.json();
+        if (data.success && data.room) {
+          setRoomInfo({
+            poolBalance: data.room.poolBalance || 0,
+            tokenSymbol: data.room.tokenSymbol || 'MEME',
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch room info:', err);
+      } finally {
+        setRoomLoading(false);
+      }
+    };
+    fetchRoomInfo();
+  }, [currentRoomId]);
+
+  const formattedRemaining = roomInfo ? roomInfo.poolBalance.toLocaleString() : '---';
+  const hasSessionKey = isAuthenticated;
   const remainingTime = 3600;
 
   const [selectedNet] = useState(1);
-  // 房间代币符号（应从房间配置获取，目前使用默认值）
-  const tokenSymbol = 'TOKEN';
+  // 房间代币符号
+  const tokenSymbol = roomInfo?.tokenSymbol || 'TOKEN';
+  // 移动端排行榜展开状态
+  const [showMobileLeaderboard, setShowMobileLeaderboard] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [stats, setStats] = useState<HuntStats>({
     totalHunts: 0,
     successfulHunts: 0,
@@ -160,12 +197,7 @@ export default function Game() {
       }, comboData.cooldownMs);
     }
 
-    // 模拟收益 (不再扣费)
-    if (success && reward > 0) {
-      setBalance(prev => ({
-        formatted: (parseFloat(prev.formatted) + reward).toFixed(3)
-      }));
-    }
+    // 捎捉成功后会由 useGuestAuth 自动刷新余额
 
     // 添加到历史记录
     const newRecord: HuntRecord = {
@@ -194,7 +226,7 @@ export default function Game() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen flex flex-col overflow-hidden relative bg-background font-body">
+      <div className="h-screen flex flex-col overflow-hidden relative bg-background font-body">
         {/* CRT Scanlines & Grid Background */}
         <div className="crt-scanlines z-50 pointer-events-none fixed inset-0 opacity-15"></div>
         <div className="cyber-grid opacity-20"></div>
@@ -204,7 +236,7 @@ export default function Game() {
           {/* Top Neon Bar */}
           <div className="h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent opacity-80 shadow-[0_0_10px_var(--color-primary)]"></div>
 
-          <div className="flex items-center justify-between px-6 py-4 bg-background/90 backdrop-blur-md border-b border-white/5">
+          <div className="flex items-center justify-between px-3 md:px-6 py-2 md:py-4 bg-background/90 backdrop-blur-md border-b border-white/5">
             <div className="flex items-center gap-6">
               {/* Balance Display */}
               <div className="max-md:hidden card px-4 py-2 flex items-center gap-3 !bg-white/5 !border-white/10 !p-2 !rounded-lg">
@@ -212,10 +244,17 @@ export default function Game() {
                 <div className="font-mono leading-none">
                   <div className="text-[10px] text-secondary uppercase tracking-widest mb-0.5">Balance</div>
                   <span className="text-lg font-bold text-text font-display">
-                    {balance ? balance.formatted : '0.000'}
+                    {balance.toLocaleString()}
                   </span>
                   <span className="text-xs text-text/50 ml-1">{tokenSymbol}</span>
                 </div>
+                <button
+                  onClick={() => setShowWithdrawModal(true)}
+                  className="ml-3 px-2 py-1 bg-cta/20 hover:bg-cta/40 border border-cta/30 rounded text-cta text-xs font-bold transition-colors"
+                  title="Withdraw"
+                >
+                  💸
+                </button>
               </div>
 
               {/* Room Pool Display */}
@@ -322,13 +361,13 @@ export default function Game() {
         )}
 
         {/* Main Game Area */}
-        <main className="flex-1 flex overflow-hidden relative z-10 p-4 md:p-6 gap-6">
+        <main className="flex-1 flex overflow-hidden relative z-10 p-2 md:p-6 gap-2 md:gap-6 min-h-0">
           {/* Left: Game Canvas */}
           <div className="flex-1 flex flex-col min-w-0 md:pr-0">
             {/* Canvas with CRT Monitor Frame */}
-            <div className="flex-1 flex items-center justify-center min-h-0 mb-4 relative">
+            <div className="flex-1 flex items-center justify-center min-h-0 mb-2 md:mb-4 relative overflow-hidden">
               {/* Monitor Bezel */}
-              <div className="relative h-full aspect-[4/3] max-h-[80vh]">
+              <div className="relative aspect-[4/3] md:aspect-[4/3] max-w-full max-h-full">
                 <div className="absolute -inset-1 rounded-2xl bg-gradient-to-b from-gray-800 to-black shadow-2xl"></div>
                 <div className="absolute -inset-[2px] rounded-[14px] bg-gradient-to-b from-gray-700 to-gray-900"></div>
 
@@ -342,8 +381,8 @@ export default function Game() {
 
                   <GameCanvas
                     selectedNet={selectedNet}
-                    onHuntResult={(success, reward, memeId, memeEmoji, netCost, txHash) =>
-                      handleHuntResult(success, reward, selectedNet, memeId, memeEmoji, netCost, txHash)
+                    onHuntResult={(success, reward, memeId, memeEmoji, netCost, txHash, comboData) =>
+                      handleHuntResult(success, reward, selectedNet, memeId, memeEmoji, netCost, txHash, comboData)
                     }
                   />
                 </div>
@@ -363,10 +402,68 @@ export default function Game() {
           </div>
 
           {/* Right: Sidebar */}
-          <div className="w-80 flex-none hidden lg:block h-full overflow-hidden rounded-xl border border-white/5 bg-background/50 backdrop-blur-md">
+          <div className="w-80 flex-none hidden md:flex md:flex-col overflow-hidden rounded-xl border border-white/5 bg-background/50 backdrop-blur-md">
             <GameSidebar history={huntHistory} tokenSymbol={tokenSymbol} />
           </div>
         </main>
+
+        {/* Mobile Sidebar Panel (shown on small screens) - UI/UX PRO MAX Optimized */}
+        <div className="md:hidden flex flex-col">
+          {/* Collapsible Content Panel */}
+          <div 
+            className={`
+              overflow-hidden transition-all duration-300 ease-out
+              bg-[#0F0F23] border-t border-white/10
+              ${showMobileLeaderboard ? 'h-64 opacity-100' : 'h-0 opacity-0'}
+            `}
+          >
+            <GameSidebar 
+              history={huntHistory} 
+              tokenSymbol={tokenSymbol} 
+              className="h-full rounded-none border-0" 
+            />
+          </div>
+
+          {/* Bottom Tab Bar - 44px touch targets */}
+          <div className="flex items-stretch bg-background/95 border-t border-white/10 backdrop-blur-lg">
+            {/* Chat Tab */}
+            <button
+              onClick={() => setShowMobileLeaderboard(!showMobileLeaderboard)}
+              className="flex-1 flex flex-col items-center justify-center py-3 min-h-[52px] cursor-pointer transition-colors duration-200 hover:bg-white/5 active:bg-white/10"
+            >
+              <span className="text-lg mb-0.5">💬</span>
+              <span className="text-[10px] font-bold text-text/60 uppercase tracking-wide">Chat</span>
+            </button>
+            
+            {/* Rank Tab */}
+            <button
+              onClick={() => setShowMobileLeaderboard(!showMobileLeaderboard)}
+              className="flex-1 flex flex-col items-center justify-center py-3 min-h-[52px] cursor-pointer transition-colors duration-200 hover:bg-white/5 active:bg-white/10 border-x border-white/5"
+            >
+              <span className="text-lg mb-0.5">🏆</span>
+              <span className="text-[10px] font-bold text-text/60 uppercase tracking-wide">Rank</span>
+            </button>
+            
+            {/* Logs Tab */}
+            <button
+              onClick={() => setShowMobileLeaderboard(!showMobileLeaderboard)}
+              className="flex-1 flex flex-col items-center justify-center py-3 min-h-[52px] cursor-pointer transition-colors duration-200 hover:bg-white/5 active:bg-white/10"
+            >
+              <span className="text-lg mb-0.5">📜</span>
+              <span className="text-[10px] font-bold text-text/60 uppercase tracking-wide">Logs</span>
+            </button>
+
+            {/* Toggle Indicator */}
+            <div 
+              className={`
+                absolute left-1/2 -translate-x-1/2 top-0 h-0.5 w-16 
+                bg-gradient-to-r from-primary to-cta 
+                transition-opacity duration-300
+                ${showMobileLeaderboard ? 'opacity-100' : 'opacity-0'}
+              `}
+            />
+          </div>
+        </div>
 
         {/* Bottom Control Bar */}
         <ControlBar
@@ -375,6 +472,14 @@ export default function Game() {
           levelUp={levelUp}
           tokenSymbol={tokenSymbol}
           totalEarned={stats.totalRewards}
+        />
+
+        {/* Withdraw Modal */}
+        <WithdrawModal
+          isOpen={showWithdrawModal}
+          onClose={() => setShowWithdrawModal(false)}
+          balance={balance}
+          onWithdrawSuccess={() => {}}
         />
       </div>
     </ErrorBoundary>

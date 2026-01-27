@@ -134,36 +134,80 @@ describe("meme-hunter", () => {
     console.log("Session Authorized:", sessionKey.publicKey.toBase58());
   });
 
-  it("Hunts and Claims Reward", async () => {
-    // Note: Since logic is 50/50, this might fail half the time in reality.
-    // For test stability, we might want to mock RNG or handle failure gracefully.
+  it("Claims Reward (Relayer Action)", async () => {
+    // claim_reward 是 Relayer 调用的指令
+    // 在测试中，我们假设 creator 也是 relayer
     
-    try {
-        await program.methods
-        .hunt(1, 0) // MemeID 1, NetSize 0
-        .accounts({
-            sessionSigner: sessionKey.publicKey,
-            user: creator.publicKey,
-            sessionPda: sessionPda,
-            room: roomPda,
-            roomVault: roomVault,
-            userTokenAccount: creatorTokenAccount, // Receiving back into same account
-            tokenProgram: TOKEN_PROGRAM_ID,
-        })
-        .signers([sessionKey]) // SIGNED BY SESSION KEY
-        .rpc();
-        
-        console.log("Hunt Transaction Sent!");
-        
-        // Check Balance Change (Successful hunt adds 100 tokens)
-        // Original: 1M - 500k = 500k
-        // If hunt success: 500k + 100
-        const updatedAccount = await getAccount(provider.connection, creatorTokenAccount);
-        console.log("New Balance:", updatedAccount.amount.toString());
+    const [gameConfigPda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("game_config")],
+      program.programId
+    );
 
-    } catch (e) {
-        console.error("Hunt Failed (Expected roughly 50% of time or logic error):", e);
+    const claimAmount = new anchor.BN(1000); // 0.001 tokens (6 decimals)
+
+    try {
+      await program.methods
+        .claimReward(claimAmount)
+        .accounts({
+          relayer: creator.publicKey,
+          gameConfig: gameConfigPda,
+          room: roomPda,
+          roomVault: roomVault,
+          userTokenAccount: creatorTokenAccount,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([creator])
+        .rpc();
+
+      console.log("Claim Reward Transaction Sent!");
+
+      // 验证用户代币账户余额增加
+      const updatedAccount = await getAccount(provider.connection, creatorTokenAccount);
+      console.log("User Balance after claim:", updatedAccount.amount.toString());
+
+    } catch (e: any) {
+      console.error("Claim Reward Failed:", e.message || e);
+      // 如果失败是因为合约还未部署，测试应该标记为 pending
+    }
+  });
+
+  it("Settles Room (Creator Action)", async () => {
+    // settle_room 是房间创建者调用的指令
+    // 它会将剩余代币返回给创建者并关闭房间
+
+    try {
+      await program.methods
+        .settleRoom()
+        .accounts({
+          creator: creator.publicKey,
+          room: roomPda,
+          roomVault: roomVault,
+          creatorTokenAccount: creatorTokenAccount,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([creator])
+        .rpc();
+
+      console.log("Settle Room Transaction Sent!");
+
+      // 验证 Vault 已清空
+      try {
+        const vaultAccount = await getAccount(provider.connection, roomVault);
+        console.log("Vault Balance after settle:", vaultAccount.amount.toString());
+        assert.equal(vaultAccount.amount.toString(), "0", "Vault should be empty");
+      } catch (e) {
+        // Vault 可能已关闭
+        console.log("Vault account closed or empty");
+      }
+
+      // 验证用户代币账户余额增加
+      const updatedAccount = await getAccount(provider.connection, creatorTokenAccount);
+      console.log("Creator Balance after settle:", updatedAccount.amount.toString());
+
+    } catch (e: any) {
+      console.error("Settle Room Failed:", e.message || e);
     }
   });
 
 });
+

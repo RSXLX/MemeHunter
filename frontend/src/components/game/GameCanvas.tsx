@@ -9,7 +9,7 @@ import {
   type Animation
 } from '../../game/animations';
 import { memeInterpolator, type InterpolatedMeme } from '../../game/memeInterpolator';
-import { useResponsiveCanvas } from '../../hooks/useResponsiveCanvas';
+// import { useResponsiveCanvas } from '../../hooks/useResponsiveCanvas';
 
 interface GameCanvasProps {
   selectedNet: number;
@@ -19,8 +19,40 @@ interface GameCanvasProps {
     memeId?: number,
     memeEmoji?: string,
     netCost?: number,
-    txHash?: string
+    txHash?: string,
+    comboData?: {
+      comboCount: number;
+      netLevel: string;
+      cooldownMs: number;
+      levelUp?: boolean;
+    }
   ) => void;
+}
+
+// Meme 连续生成配置
+const SPAWN_CONFIG = {
+  checkInterval: 2000,    // 每 2 秒检查
+  minMemes: 4,            // 最少 4 个 meme
+  maxMemes: 8,            // 最多 8 个 meme
+} as const;
+
+// 连击等级配置
+const COMBO_LEVELS = {
+  normal: { minCombo: 0, cooldownMs: 5000, multiplier: 1.0 },
+  silver: { minCombo: 3, cooldownMs: 4000, multiplier: 1.5 },
+  gold: { minCombo: 6, cooldownMs: 3000, multiplier: 2.0 },
+  diamond: { minCombo: 10, cooldownMs: 2000, multiplier: 3.0 },
+} as const;
+
+function getNetLevel(comboCount: number): 'normal' | 'silver' | 'gold' | 'diamond' {
+  if (comboCount >= COMBO_LEVELS.diamond.minCombo) return 'diamond';
+  if (comboCount >= COMBO_LEVELS.gold.minCombo) return 'gold';
+  if (comboCount >= COMBO_LEVELS.silver.minCombo) return 'silver';
+  return 'normal';
+}
+
+function getCooldownForLevel(level: keyof typeof COMBO_LEVELS): number {
+  return COMBO_LEVELS[level].cooldownMs;
 }
 
 export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProps) {
@@ -30,12 +62,14 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
   const animationFrameRef = useRef<number | undefined>(undefined);
   const isHuntingRef = useRef<boolean>(false);
 
-  // 响应式画布尺寸
-  const { width: displayWidth, height: displayHeight, isMobile } = useResponsiveCanvas();
+  // 响应式画布尺寸 (现在使用 CSS w-full h-full)\r\n  // const { width: displayWidth, height: displayHeight, isMobile } = useResponsiveCanvas();
 
   // Mock State
   const isConnected = true;
   const interpolatedMemesRef = useRef<InterpolatedMeme[]>([]);
+
+  // 连击状态追踪
+  const successStreakRef = useRef<number>(0);
 
   // 物理状态存储
   const physicsStatesRef = useRef<Map<string, import('../../game/MemePhysics').MemePhysicsState>>(new Map());
@@ -47,40 +81,83 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
   useEffect(() => {
     // 动态导入物理引擎
     import('../../game/MemePhysics').then(({ initMemePhysics, updateMemePhysics }) => {
-      // Generate initial memes with physics
-      const generateMockMemes = () => {
-        const memes = [];
-        for (let i = 0; i < 6; i++) {
-          const config = MEME_CONFIG[i % MEME_CONFIG.length];
-          const x = CANVAS_CONFIG.width * 0.2 + Math.random() * CANVAS_CONFIG.width * 0.6;
-          const y = CANVAS_CONFIG.height * 0.2 + Math.random() * CANVAS_CONFIG.height * 0.6;
+      // Meme ID 计数器
+      let memeIdCounter = 0;
 
-          // 根据稀有度设置速度系数
-          const speedMultiplier = config.speed / 4;
-
-          memes.push({
-            id: `mock-${i}`,
-            memeId: config.id,
-            emoji: config.emoji,
-            x,
-            y,
-          });
-
-          // 初始化物理状态
-          physicsStatesRef.current.set(`mock-${i}`, initMemePhysics(x, y, speedMultiplier));
+      // 根据概率选择 meme 类型
+      const pickRandomMemeConfig = () => {
+        const roll = Math.random() * 100;
+        let cumulative = 0;
+        for (const config of MEME_CONFIG) {
+          cumulative += config.probability;
+          if (roll < cumulative) return config;
         }
-        return memes;
+        return MEME_CONFIG[0]; // fallback
       };
 
-      // Feed initial data
-      memeInterpolator.updateFromServer(generateMockMemes());
+      // 从边缘生成新 meme
+      const spawnMemeFromEdge = () => {
+        const id = `meme-${memeIdCounter++}`;
+        const config = pickRandomMemeConfig();
+        const speedMultiplier = config.speed / 4;
 
-      // Physics update loop (simulate server updates at 60fps physics, broadcast at 10fps)
+        // 随机选择一个边缘
+        const edge = Math.floor(Math.random() * 4);
+        let x: number, y: number;
+        const margin = 60;
+
+        switch (edge) {
+          case 0: // 上边缘
+            x = margin + Math.random() * (CANVAS_CONFIG.width - margin * 2);
+            y = margin;
+            break;
+          case 1: // 右边缘
+            x = CANVAS_CONFIG.width - margin;
+            y = margin + Math.random() * (CANVAS_CONFIG.height - margin * 2);
+            break;
+          case 2: // 下边缘
+            x = margin + Math.random() * (CANVAS_CONFIG.width - margin * 2);
+            y = CANVAS_CONFIG.height - margin;
+            break;
+          default: // 左边缘
+            x = margin;
+            y = margin + Math.random() * (CANVAS_CONFIG.height - margin * 2);
+        }
+
+        // 初始化物理状态
+        physicsStatesRef.current.set(id, initMemePhysics(x, y, speedMultiplier));
+
+        // 添加到插值器
+        const currentMemes = Array.from((memeInterpolator as any).memes.values()).map((m: any) => ({
+          id: m.id,
+          memeId: m.memeId,
+          emoji: m.emoji,
+          x: m.targetX,
+          y: m.targetY,
+        }));
+
+        currentMemes.push({
+          id,
+          memeId: config.id,
+          emoji: config.emoji,
+          x,
+          y,
+        });
+
+        memeInterpolator.updateFromServer(currentMemes);
+      };
+
+      // 生成初始 memes
+      for (let i = 0; i < SPAWN_CONFIG.minMemes + 2; i++) {
+        spawnMemeFromEdge();
+      }
+
+      // Physics update loop
       let physicsFrame = 0;
 
       const updatePhysics = () => {
         const now = performance.now();
-        const deltaTime = Math.min((now - lastUpdateTimeRef.current) / 1000, 0.1); // Cap at 100ms
+        const deltaTime = Math.min((now - lastUpdateTimeRef.current) / 1000, 0.1);
         lastUpdateTimeRef.current = now;
         frameCountRef.current++;
         physicsFrame++;
@@ -91,29 +168,47 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
           physicsStatesRef.current.set(id, newState);
         });
 
-        // Broadcast to interpolator every ~100ms (every 6 frames at 60fps)
-        if (physicsFrame % 6 === 0) {
-          const mockUpdate: any[] = [];
+        // 实时同步到插值器 (60fps) - 移除限制以解决卡顿
+        const mockUpdate: any[] = [];
 
-          physicsStatesRef.current.forEach((state, id) => {
-            const memeData = memeInterpolator['memes'].get(id);
-            if (memeData) {
-              mockUpdate.push({
-                id,
-                memeId: memeData.memeId,
-                emoji: memeData.emoji,
-                x: state.x,
-                y: state.y,
-              });
-            }
-          });
+        physicsStatesRef.current.forEach((state, id) => {
+          const memeData = (memeInterpolator as any).memes.get(id);
+          if (memeData) {
+            mockUpdate.push({
+              id,
+              memeId: memeData.memeId,
+              emoji: memeData.emoji,
+              x: state.x,
+              y: state.y,
+            });
+          }
+        });
 
-          memeInterpolator.updateFromServer(mockUpdate);
+        memeInterpolator.updateFromServer(mockUpdate);
+      };
+
+      // 连续生成检查
+      const checkAndSpawnMemes = () => {
+        const currentCount = (memeInterpolator as any).memes.size;
+        if (currentCount < SPAWN_CONFIG.minMemes) {
+          // 补充到最小数量
+          const toSpawn = SPAWN_CONFIG.minMemes - currentCount;
+          for (let i = 0; i < toSpawn; i++) {
+            spawnMemeFromEdge();
+          }
+        } else if (currentCount < SPAWN_CONFIG.maxMemes && Math.random() > 0.5) {
+          // 有一定概率多生成一个
+          spawnMemeFromEdge();
         }
       };
 
-      const interval = setInterval(updatePhysics, 16); // ~60fps physics
-      return () => clearInterval(interval);
+      const physicsInterval = setInterval(updatePhysics, 16);
+      const spawnInterval = setInterval(checkAndSpawnMemes, SPAWN_CONFIG.checkInterval);
+
+      return () => {
+        clearInterval(physicsInterval);
+        clearInterval(spawnInterval);
+      };
     });
   }, []);
   // -----------------------------
@@ -292,7 +387,15 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
           animationsRef.current = [...animationsRef.current, emptyAnim];
         }, 250);
 
-        onHuntResult?.(false, 0, undefined, undefined, NET_CONFIG[selectedNet].cost);
+        // 重置连击
+        successStreakRef.current = 0;
+        const comboData = {
+          comboCount: 0,
+          netLevel: 'normal' as const,
+          cooldownMs: getCooldownForLevel('normal'),
+          levelUp: false,
+        };
+        onHuntResult?.(false, 0, undefined, undefined, NET_CONFIG[selectedNet].cost, undefined, comboData);
         return;
       }
 
@@ -307,7 +410,21 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
         const reward = memeConfig?.reward || 0;
 
         if (isSuccess) {
-          // 捕获成功
+          // 捕获成功 - 更新连击
+          const prevCombo = successStreakRef.current;
+          successStreakRef.current++;
+          const newCombo = successStreakRef.current;
+          const prevLevel = getNetLevel(prevCombo);
+          const newLevel = getNetLevel(newCombo);
+          const levelUp = prevLevel !== newLevel;
+
+          const comboData = {
+            comboCount: newCombo,
+            netLevel: newLevel,
+            cooldownMs: getCooldownForLevel(newLevel),
+            levelUp,
+          };
+
           const captureAnim = createAnimation(
             'capture',
             targetMeme.x,
@@ -328,10 +445,19 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
             targetMeme.type,
             memeConfig?.emoji,
             NET_CONFIG[selectedNet].cost,
-            "0x_mock_tx_hash"
+            "0x_mock_tx_hash",
+            comboData
           );
         } else {
-          // 逃脱
+          // 逃脱 - 重置连击
+          successStreakRef.current = 0;
+          const comboData = {
+            comboCount: 0,
+            netLevel: 'normal' as const,
+            cooldownMs: getCooldownForLevel('normal'),
+            levelUp: false,
+          };
+
           const escapeAnim = createAnimation(
             'escape',
             targetMeme.x,
@@ -348,7 +474,8 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
             targetMeme.type,
             memeConfig?.emoji,
             NET_CONFIG[selectedNet].cost,
-            "0x_mock_tx_hash"
+            "0x_mock_tx_hash",
+            comboData
           );
         }
         isHuntingRef.current = false;
@@ -373,19 +500,14 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
   }, [handleHunt]);
 
   return (
-    <div className={`relative ${isMobile ? 'w-full' : ''}`}>
+    <div className="relative w-full h-full">
       <canvas
         ref={canvasRef}
         width={CANVAS_CONFIG.width}
         height={CANVAS_CONFIG.height}
         onClick={handleClick}
         onTouchStart={handleTouch}
-        className="rounded-xl cursor-crosshair touch-none"
-        style={{
-          width: displayWidth,
-          height: displayHeight,
-          maxWidth: '100%',
-        }}
+        className="rounded-xl cursor-crosshair touch-none w-full h-full object-contain"
       />
     </div>
   );

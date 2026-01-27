@@ -152,6 +152,14 @@ export default function Home() {
               </button>
             </div>
 
+            {/* My Rooms Button */}
+            <button
+              onClick={() => navigate('/my-rooms')}
+              className="w-full py-3 bg-primary/10 border border-primary/30 text-primary rounded-lg font-display uppercase tracking-widest text-sm hover:bg-primary/20 transition-colors"
+            >
+              🎮 My Rooms
+            </button>
+
             {/* Withdraw Button */}
             {balance > 0 && (
               <button

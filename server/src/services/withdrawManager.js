@@ -4,6 +4,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import db from '../database/db.js';
 import { userManager } from './userManager.js';
+import { solanaClient } from './solanaClient.js';
 
 // 预编译 SQL 语句
 const stmts = {
@@ -145,11 +146,19 @@ class WithdrawManager {
      * 完成申请 - 记录交易哈希
      */
     markCompleted(requestId, txHash) {
+        const request = this.getRequestById(requestId);
+        if (!request) {
+            throw new Error('Request not found');
+        }
+
         stmts.updateRequestTxHash.run({
             id: requestId,
             status: 'completed',
             txHash: txHash,
         });
+
+        // 记录累计提现金额
+        userManager.recordWithdrawal(request.userId, request.amount);
 
         console.log(`✅ Withdraw completed: ${requestId} -> ${txHash}`);
         return this.getRequestById(requestId);
@@ -174,6 +183,67 @@ class WithdrawManager {
 
         console.log(`❌ Withdraw failed: ${requestId} - ${reason}`);
         return this.getRequestById(requestId);
+    }
+
+    /**
+     * 处理链上提现 - 完整流程
+     * 
+     * @param {string} requestId - 提现申请 ID
+     * @param {string} roomPda - 房间 PDA 地址
+     * @returns {Promise<object>} 处理结果
+     */
+    async processWithdrawOnChain(requestId, roomPda) {
+        const request = this.getRequestById(requestId);
+        if (!request) {
+            throw new Error('Request not found');
+        }
+
+        if (request.status !== 'pending') {
+            throw new Error(`Request is not pending. Current status: ${request.status}`);
+        }
+
+        // 1. 标记为处理中
+        this.markProcessing(requestId);
+
+        try {
+            // 2. 获取用户的代币账户 (使用提现地址)
+            const userTokenAccount = request.walletAddress;
+
+            // 3. 将积分转换为代币金额
+            const tokenAmount = solanaClient.pointsToTokenAmount(request.amount);
+
+            console.log(`📤 Processing on-chain withdraw: ${request.amount} points -> ${solanaClient.formatTokenAmount(tokenAmount)} tokens`);
+
+            // 4. 调用链上 claimReward
+            const result = await solanaClient.claimReward(
+                roomPda,
+                userTokenAccount,
+                tokenAmount
+            );
+
+            if (result.success) {
+                // 5. 成功：更新状态和交易哈希
+                const updated = this.markCompleted(requestId, result.txHash);
+                return {
+                    success: true,
+                    request: updated,
+                    txHash: result.txHash,
+                };
+            } else {
+                // 6. 失败：退还积分
+                const updated = this.markFailed(requestId, result.error);
+                return {
+                    success: false,
+                    request: updated,
+                    error: result.error,
+                };
+            }
+
+        } catch (error) {
+            // 异常：退还积分
+            this.markFailed(requestId, error.message);
+            throw error;
+        }
     }
 
     /**

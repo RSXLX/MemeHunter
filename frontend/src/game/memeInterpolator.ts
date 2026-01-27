@@ -1,11 +1,8 @@
 /**
- * Meme 插值器 - 实现客户端预测与平滑插值
+ * Meme 插值器 - 管理 meme 列表状态
  * 
- * 解决问题：WebSocket 每 100ms 发送一次位置更新，导致 meme 移动卡顿
- * 解决方案：在两次服务端更新之间进行线性插值，让移动更平滑
+ * 简化版：直接使用物理引擎位置，不做插值
  */
-
-import { CANVAS_CONFIG } from '../utils/constants';
 
 export interface ServerMeme {
   id: string;
@@ -32,11 +29,6 @@ export interface InterpolatedMeme extends ServerMeme {
   lastUpdateTime: number;
   interpolationProgress: number;
 }
-
-// 插值持续时间（与服务端广播间隔一致）
-const INTERPOLATION_DURATION = 100; // ms
-// 最大外推时间（防止服务端断连时 meme 飞出画布）
-const MAX_EXTRAPOLATION = 200; // ms
 
 /**
  * MemeInterpolator 类 - 管理所有 meme 的插值状态
@@ -104,41 +96,17 @@ export class MemeInterpolator {
   }
 
   /**
-   * 每帧更新插值（由 requestAnimationFrame 调用）
+   * 每帧更新 - 简化版：直接返回目标位置（不做插值）
+   * 因为客户端物理引擎已经以 60fps 平滑更新，无需二次插值
    */
   update(): InterpolatedMeme[] {
-    const now = performance.now();
     const result: InterpolatedMeme[] = [];
 
     for (const meme of this.memes.values()) {
-      const elapsed = now - meme.lastUpdateTime;
-      
-      if (elapsed < INTERPOLATION_DURATION) {
-        // 插值阶段：平滑从当前位置移动到目标位置
-        const progress = elapsed / INTERPOLATION_DURATION;
-        // 使用 ease-out 曲线让移动更自然
-        const easedProgress = 1 - Math.pow(1 - progress, 2);
-        
-        meme.renderX = meme.prevX + (meme.targetX - meme.prevX) * easedProgress;
-        meme.renderY = meme.prevY + (meme.targetY - meme.prevY) * easedProgress;
-        meme.interpolationProgress = progress;
-      } else if (elapsed < INTERPOLATION_DURATION + MAX_EXTRAPOLATION) {
-        // 外推阶段：基于预测速度继续移动
-        const extraTime = (elapsed - INTERPOLATION_DURATION) / 1000;
-        meme.renderX = meme.targetX + meme.vx * extraTime;
-        meme.renderY = meme.targetY + meme.vy * extraTime;
-        
-        // 边界处理
-        meme.renderX = Math.max(25, Math.min(CANVAS_CONFIG.width - 25, meme.renderX));
-        meme.renderY = Math.max(25, Math.min(CANVAS_CONFIG.height - 25, meme.renderY));
-        meme.interpolationProgress = 1;
-      } else {
-        // 超时：停留在最后位置
-        meme.renderX = meme.targetX;
-        meme.renderY = meme.targetY;
-        meme.interpolationProgress = 1;
-      }
-
+      // 直接使用目标位置作为渲染位置
+      meme.renderX = meme.targetX;
+      meme.renderY = meme.targetY;
+      meme.interpolationProgress = 1;
       result.push(meme);
     }
 

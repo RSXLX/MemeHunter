@@ -38,5 +38,7 @@ if (relayerAccount) {
 
 export const solanaConfig = {
   rpcUrl: RPC_URL,
-  network: 'devnet' // 默认 devnet
+  network: 'devnet', // 默认 devnet
+  programId: process.env.MEME_HUNTER_PROGRAM_ID || process.env.CONTRACT_ADDRESS || 'Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS',
+  tokenDecimals: 6, // 代币精度
 };

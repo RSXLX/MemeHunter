@@ -64,6 +64,13 @@ const stmts = {
     WHERE id = @id AND balance >= @amount
   `),
 
+    recordWithdrawal: db.prepare(`
+    UPDATE users 
+    SET total_withdrawn = total_withdrawn + @amount, 
+        updated_at = datetime('now')
+    WHERE id = @id
+  `),
+
     bindWallet: db.prepare(`
     UPDATE users 
     SET wallet_address = @walletAddress, updated_at = datetime('now')
@@ -71,7 +78,7 @@ const stmts = {
   `),
 
     getTopUsers: db.prepare(`
-    SELECT id, nickname, wallet_address, balance, total_earned
+    SELECT id, nickname, wallet_address, balance, total_earned, total_withdrawn
     FROM users
     ORDER BY total_earned DESC
     LIMIT ?
@@ -201,6 +208,20 @@ class UserManager {
     }
 
     /**
+     * 记录提现金额
+     */
+    recordWithdrawal(userId, amount) {
+        const result = stmts.recordWithdrawal.run({
+            id: userId,
+            amount: Math.floor(amount),
+        });
+        if (result.changes > 0) {
+            console.log(`💸 User ${userId} withdrew ${amount}`);
+        }
+        return result.changes > 0;
+    }
+
+    /**
      * 绑定钱包地址
      */
     bindWallet(userId, walletAddress) {
@@ -230,6 +251,7 @@ class UserManager {
             walletAddress: u.wallet_address,
             balance: u.balance,
             totalEarned: u.total_earned,
+            totalWithdrawn: u.total_withdrawn || 0,
         }));
     }
 
@@ -244,6 +266,7 @@ class UserManager {
             walletAddress: dbUser.wallet_address,
             balance: dbUser.balance,
             totalEarned: dbUser.total_earned,
+            totalWithdrawn: dbUser.total_withdrawn || 0,
             createdAt: dbUser.created_at,
             updatedAt: dbUser.updated_at,
         };

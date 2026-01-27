@@ -192,4 +192,53 @@ withdrawRouter.post('/admin/withdraw/:id/process', (req, res) => {
     }
 });
 
+/**
+ * POST /api/admin/withdraw/:id/process-onchain
+ * 链上自动处理提现 (调用智能合约)
+ * 
+ * Body:
+ * - roomPda: string - 房间 PDA 地址 (用于确定代币来源)
+ */
+withdrawRouter.post('/admin/withdraw/:id/process-onchain', async (req, res) => {
+    try {
+        // TODO: 添加管理员认证
+        const { roomPda } = req.body;
+
+        if (!roomPda) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'roomPda is required',
+            });
+        }
+
+        const result = await withdrawManager.processWithdrawOnChain(
+            req.params.id,
+            roomPda
+        );
+
+        if (result.success) {
+            res.json({
+                success: true,
+                request: result.request,
+                txHash: result.txHash,
+                message: 'Withdraw processed successfully on-chain',
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                request: result.request,
+                error: result.error,
+                message: 'On-chain withdraw failed',
+            });
+        }
+    } catch (error) {
+        console.error('Process on-chain withdraw error:', error);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: error.message,
+        });
+    }
+});
+
 export default withdrawRouter;
+
