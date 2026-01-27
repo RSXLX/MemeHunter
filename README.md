@@ -1,16 +1,16 @@
 # 🎮 MemeHunter
 
 <p align="center">
-  <img src="frontend/memeHunter.png" alt="MemeHunter Logo" width="200"/>
+  <img src="frontend/logo.svg" alt="MemeHunter Logo" width="200"/>
 </p>
 
 <p align="center">
-  <strong>基于 Solana Devnet 的实时全链上 Meme 捕猎游戏</strong>
+  <strong>基于 Solana 的高性能实时 Meme 捕猎竞技游戏</strong>
 </p>
 
 <p align="center">
   <a href="#核心特性">核心特性</a> •
-  <a href="#技术栈">技术栈</a> •
+  <a href="#技术架构">技术架构</a> •
   <a href="#快速开始">快速开始</a> •
   <a href="#项目结构">项目结构</a> •
   <a href="#游戏机制">游戏机制</a>
@@ -20,194 +20,118 @@
 
 ## 🌟 项目概述
 
-**MemeHunter** 是一款基于 **Solana** 高性能区块链构建的全链上（Fully On-Chain）互动游戏。玩家在一个公共的数字猎场中，通过点击屏幕发射捕网来捕捉四处逃窜的 Meme 精灵（如 Pepe, Doge, Fox 等）。
+**MemeHunter** 是一款结合 **Web3** 资产与 **Web2** 流畅体验的即时互动游戏。项目采用 **混合架构（Hybrid Architecture）**：利用 WebSocket 实现毫秒级的实时捕猎反馈和多人位置同步，同时借助 **Solana** 区块链的高效能处理资产结算与奖励分发。
 
-项目旨在展示 Solana 区块链在 **高并发**（TPS 65,000+）、**低延迟**（400ms 出块）和 **低成本** 方面的卓越性能，为用户提供媲美 Web2 游戏的流畅体验。
+玩家可以在公共大厅或私人房间中，使用不同等级的捕网捕捉 Pepe, Doge 等 Meme 精灵，通过连击（Combo）机制获取更高分数与 SOL 奖励。
 
 ## ✨ 核心特性
 
-- 🔗 **钱包连接** - 支持 Phantom, Backpack 等 Solana 钱包
-- 🔑 **即时交互** - 利用 Solana 的高速网络实现毫秒级响应
-- 🎯 **即时狩猎** - 点击即发射，体验超低延迟链上反馈
-- 👥 **多端同步** - 实时 WebSocket 链接，所有玩家位置与动作实时同步
-- 🏆 **实时榜单** - 狩猎高手的实时排行榜
-- 📜 **交易历史** - 完整的狩猎记录与 Solana Explorer 深度集成
-- 🌍 **国际化** - 支持中/英双语切换
+- ⚡ **极速体验** - 采用 Socket.IO 实现高频游戏逻辑，告别链上等待，体验 0 延迟捕猎
+- 👤 **灵活登录** - 支持 **游客模式** 快速体验，亦可连接 Solana 钱包（Phantom/Backpack）进行资产交互
+- 🏠 **房间系统** - 全局大厅 + 独立游戏房间，支持多人同屏实时互动
+- 🔥 **连击机制** - 独特的 Combo 系统，连续捕猎成功可提升捕网等级与奖励倍率
+- 💰 **链上激励** - 游戏积分/奖励可结算至 Solana 链上，真实拥有游戏资产
+- 🌍 **多语言** - 内置中/英双语支持，服务全球玩家
 
-## 💡 为什么选择 Solana?
-
-| Solana 特性 | MemeHunter 的应用 |
-|------------|-------------------|
-| **65,000+ TPS** | **高并发游戏逻辑** - 支持成千上万玩家同时狩猎而不拥堵 |
-| **400ms 出块** | **即时反馈** - 从点击捕获到链上确认仅需不到 1 秒 |
-| **超低 Gas** | **高频微支付** - 每次狩猎成本极低，甚至可以忽略不计 |
-| **Rust/Anchor** | **高性能合约** - 采用 Rust 编写，执行效率远超传统的 EVM 合约 |
-
-## 🛠 技术栈
+## 🛠 技术架构
 
 ### 前端 (Frontend)
-- **React 19** + **TypeScript** + **Vite**
-- **@solana/wallet-adapter** - Solana 钱包适配器
-- **@solana/web3.js** - 核心交互库
-- **TailwindCSS** - 现代化样式
-- **Socket.IO Client** - 实时通信
-- **i18next** - 国际化支持
+- **Framework**: React 19 + TypeScript + Vite
+- **Styling**: TailwindCSS v4 (Modern Design System)
+- **State/Network**: Socket.IO Client (Real-time), React Query
+- **Web3**: @solana/web3.js, @solana/wallet-adapter
+- **i18n**: i18next (Internationalization)
 
-### 后端 (Relayer)
-- **Node.js** + **Express**
-- **Socket.IO** - WebSocket 服务器
-- **@solana/web3.js** - 高性能区块链交互库
+### 后端 (Server/Relayer)
+- **Runtime**: Node.js + Express
+- **Real-time**: Socket.IO (Room Management, Game Loop, State Sync)
+- **Database**: Better-SQLite3 (Local lightweight storage for game state)
+- **Blockchain**: @solana/web3.js (Transaction relay & signature verification)
 
-### 智能合约 (Programs)
-- **Rust**
-- **Anchor Framework** - Solana 顶级开发框架
-- **Solana CLI**
+### 区块链 (Blockchain)
+- **Network**: Solana Devnet / Mainnet
+- **Contracts**: Rust + Anchor Framework
+- **Integration**: Metaplex (NFTs/Assets)
 
 ## 📁 项目结构
 
 ```
 MemeHunter/
-├── programs/          # 智能合约 (Rust/Anchor)
-│   ├── src/           # 程序源码
-│   └── tests/         # 程序测试
-├── frontend/          # React 前端
+├── frontend/          # React 19 客户端
 │   ├── src/
-│   │   ├── components/  # UI 组件
-│   │   ├── pages/       # 页面组件
-│   │   ├── hooks/       # 自定义 Hooks
-│   │   ├── locales/     # i18n 翻译文件
-│   │   └── config/      # 配置文件
-│   └── public/
-├── server/            # Relayer 中继服务
-│   └── src/           # 后端源码
-└── docs/              # 项目文档
+│   │   ├── components/# 游戏 UI 组件 (ControlBar, GamePanel...)
+│   │   ├── pages/     # 页面路由
+│   │   ├── hooks/     # 游戏逻辑 Hooks (useGameSocket...)
+│   │   └── i18n/      # 多语言配置
+├── server/            # Node.js 游戏服务端
+│   ├── src/
+│   │   ├── websocket/ # Socket.IO 游戏同步逻辑 (gameSync.js)
+│   │   ├── services/  # 业务逻辑 (Combo, Room, User)
+│   │   ├── routes/    # API 路由
+│   │   └── database/  # SQLite 数据层
+├── programs/          # Solana 智能合约 (Rust)
+└── docs/              # 项目文档与设计资源
 ```
 
 ## 🚀 快速开始
 
-### 环境要求
-
+### 前置要求
 - Node.js >= 18
-- Rust & Cargo
-- Solana CLI
-- Anchor CLI
-- Phantom 钱包或其他 Solana 插件钱包
-- SOL 代币 (Solana Devnet)
+- Rust & Cargo (仅合约开发需要)
+- Solana CLI (仅合约开发需要)
 
-### 网络配置
+### 1. 安装与配置
 
-| 参数 | 值 |
-|-----------|-------|
-| Network Name | Solana Devnet |
-| RPC URL | https://api.devnet.solana.com |
-| Chain ID | Devnet |
-| Currency | SOL |
-| Explorer | https://explorer.solana.com/?cluster=devnet |
+**克隆仓库**
+```bash
+git clone https://github.com/yourusername/MemeHunter.git
+cd MemeHunter
+```
 
-### 安装步骤
+**前端设置**
+```bash
+cd frontend
+npm install
+cp .env.example .env # 配置 VITE_API_URL 等
+```
 
-1. **克隆仓库**
-   ```bash
-   git clone https://github.com/yourusername/MemeHunter.git
-   cd MemeHunter
-   ```
+**后端设置**
+```bash
+cd ../server
+npm install
+cp .env.example .env # 配置 PORT, PRIVATE_KEY (Relayer), SOLANA_RPC
+```
 
-2. **安装前端依赖**
-   ```bash
-   cd frontend
-   npm install
-   ```
+### 2. 启动服务
 
-3. **安装服务端依赖**
-   ```bash
-   cd ../server
-   npm install
-   ```
+**启动后端 (Port 3001)**
+```bash
+cd server
+npm run dev
+```
 
-4. **配置环境变量**
-   
-   在 `frontend` 和 `server` 目录下分别创建 `.env` 文件：
-   
-   **server/.env:**
-   ```env
-   # Base58 格式私钥
-   PRIVATE_KEY=your_base58_private_key
-   RPC_URL=https://api.devnet.solana.com
-   PORT=3001
-   ```
+**启动前端 (Port 5173)**
+```bash
+cd frontend
+npm run dev
+```
 
-5. **部署合约**
-   ```bash
-   anchor build
-   anchor deploy
-   ```
-
-### 本地运行
-
-1. **启动 Relayer 服务**
-   ```bash
-   cd server
-   npm run dev
-   ```
-
-2. **启动前端**
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-
-3. **开始游戏**
-   
-   浏览器访问 `http://localhost:5173`
+访问 `http://localhost:5173` 即可开始游戏。
 
 ## 🎮 游戏机制
 
-### 核心流程
-```
-连接钱包 → 领取 Devnet SOL → 进入游戏 → 狩猎 Meme → 获得链上积分
-```
+1. **进入游戏**：选择游客身份直接开始，或连接钱包加载链上数据。
+2. **选择房间**：默认进入大厅，可看到其他在线玩家。
+3. **捕猎**：
+   - 点击屏幕发射捕网（消耗金币/积分）。
+   - 捕中 Meme 获得奖励。
+   - **Combo 系统**：连续命中不空网，Accumulate Combo count -> 触发 Fever 模式或高倍率奖励。
+4. **结算**：游戏内余额可随时申请提取至链上钱包（需后端 Relayer 签名处理）。
 
-### Meme 奖励表 (示例)
+## 🤝 贡献
 
-| Meme 类型 | 稀有度 | 奖励 |
-|-----------|--------|------|
-| 🐸 Pepe | 普通 | 0.02 SOL |
-| 🐕 Doge | 普通 | 0.02 SOL |
-| 🦊 Fox | 稀有 | 0.05 SOL |
-| 💎 Diamond | 史诗 | 0.15 SOL |
-| 🚀 Rocket | 传说 | 0.50 SOL |
+欢迎提交 Issue 或 Pull Request。请确保代码符合项目的 ESLint 与 Prettier 规范。
 
-## 🌐 部署架构
+## 📝 License
 
-### 前端 (Vercel)
-```bash
-cd frontend
-npm run build
-# 将 dist/ 目录部署至 Vercel
-```
-
-### 后端 (Railway/Render)
-```bash
-cd server
-# 部署至 Railway 或类似 PaaS 平台
-```
-
-## 📚 详细文档
-
-- [需求设计文档](docs/01_需求设计/MemeHunter需求设计.md)
-- [项目详细介绍](docs/project_introduction.md)
-- [部署架构文档](docs/03_部署文档/MemeHunter部署结构.md)
-
-## 🤝 贡献指南
-
-欢迎提交 Pull Request 或 Issue 参与贡献！
-
-## 📝 许可证
-
-本项目基于 [MIT License](LICENSE) 开源。
-
----
-
-<p align="center">
-  Built with ❤️ for the Solana Ecosystem
-</p>
+MIT License

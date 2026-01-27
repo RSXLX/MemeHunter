@@ -43,3 +43,13 @@ test-ledger/
 *.sqlite
 *.sqlite3
 server/data/
+
+# System / Legacy
+.agent/
+programs_backup_legacy/
+pinocchio-template/
+
+# Temporary / Junk
+check_output*.txt
+temp_linked.o
+*.log
