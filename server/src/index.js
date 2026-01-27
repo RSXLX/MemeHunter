@@ -5,15 +5,12 @@ import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
-// 新的路由和服务
+// 路由和服务
 import { authRouter } from './routes/auth.js';
 import { roomRouter } from './routes/room.js';
 import { withdrawRouter } from './routes/withdraw.js';
-import { initWebSocket } from './websocket/gameSync.js';
 
-// 保留旧的路由 (兼容)
-import { huntRouter } from './routes/hunt.js';
-import { nonceRouter } from './routes/nonce.js';
+import { initWebSocket } from './websocket/gameSync.js';
 
 // 数据库初始化 (自动创建表)
 import './database/db.js';
@@ -36,19 +33,17 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: Date.now(),
-    version: '2.0.0',
+    version: '2.1.0',
     mode: 'centralized',
+    note: 'Hunt logic moved to WebSocket',
   });
 });
 
-// ========== 新 API 路由 ==========
+// ========== API 路由 ==========
 app.use('/api', authRouter);      // 认证: /api/auth/*, /api/user/*
 app.use('/api', roomRouter);      // 房间: /api/rooms/*
 app.use('/api', withdrawRouter);  // 领取: /api/withdraw/*
 
-// ========== 旧 API 路由 (兼容) ==========
-app.use('/api', huntRouter);
-app.use('/api', nonceRouter);
 
 // 404 处理
 app.use((req, res) => {
@@ -82,12 +77,12 @@ const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
   console.log('');
   console.log('🎮 ================================');
-  console.log('   MemeHunter Server v2.0');
-  console.log('   Centralized Mode (No Blockchain)');
+  console.log('   MemeHunter Server v2.1');
+  console.log('   Hunt Logic: WebSocket Only');
   console.log('🎮 ================================');
   console.log('');
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📡 WebSocket ready`);
+  console.log(`📡 WebSocket ready (hunt events)`);
   console.log(`🔗 API Base: http://localhost:${PORT}/api`);
   console.log('');
   console.log('📋 Endpoints:');
@@ -96,6 +91,10 @@ httpServer.listen(PORT, () => {
   console.log('   GET  /api/rooms          - 房间列表');
   console.log('   POST /api/rooms          - 创建房间');
   console.log('   POST /api/withdraw       - 提现申请');
+  console.log('');
+  console.log('📡 WebSocket Events:');
+  console.log('   hunt                     - 狩猎请求');
+  console.log('   huntResult               - 狩猎结果');
   console.log('');
 });
 

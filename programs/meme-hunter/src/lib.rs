@@ -23,7 +23,6 @@ pub mod meme_hunter {
         instructions::authorize_session::authorize_session(ctx, duration_secs)
     }
 
-    pub fn hunt(ctx: Context<Hunt>, meme_id: u8, net_size: u8) -> Result<()> {
-        instructions::hunt::hunt(ctx, meme_id, net_size)
-    }
+    // hunt 指令已移至后端处理
+    // 后续将新增 claim_reward 用于批量发放奖励
 }

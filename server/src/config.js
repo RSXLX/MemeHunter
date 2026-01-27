@@ -1,38 +1,42 @@
-import { createPublicClient, createWalletClient, http, defineChain } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
+import { Connection, Keypair } from '@solana/web3.js';
+import bs58 from 'bs58';
+import 'dotenv/config';
 
-// 定义 Monad 测试网
-export const monadTestnet = defineChain({
-  id: parseInt(process.env.CHAIN_ID || '10143'),
-  name: 'Monad Testnet',
-  nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
-  rpcUrls: {
-    default: { http: [process.env.RPC_URL || 'https://testnet-rpc.monad.xyz'] },
-  },
-  blockExplorers: {
-    default: { name: 'Monad Explorer', url: 'https://testnet.monadexplorer.com' },
-  },
-});
+// Solana 连接配置
+const RPC_URL = process.env.RPC_URL || 'https://api.devnet.solana.com';
+export const connection = new Connection(RPC_URL, 'confirmed');
 
 // Relayer 账户
 const privateKey = process.env.PRIVATE_KEY;
 if (!privateKey) {
-  throw new Error('PRIVATE_KEY not set');
+  console.warn('⚠️ PRIVATE_KEY not set in environment variables. Relayer functions will not work.');
 }
 
-export const relayerAccount = privateKeyToAccount(`0x${privateKey.replace('0x', '')}`);
+let relayerKeypair = null;
 
-// 公共客户端 (读取操作)
-export const publicClient = createPublicClient({
-  chain: monadTestnet,
-  transport: http(),
-});
+if (privateKey) {
+  try {
+    // 尝试解析 Base58 格式
+    const secretKey = bs58.decode(privateKey);
+    relayerKeypair = Keypair.fromSecretKey(secretKey);
+  } catch (e) {
+    try {
+      // 尝试解析 JSON 数组格式 [1,2,3...]
+      const secretKey = Uint8Array.from(JSON.parse(privateKey));
+      relayerKeypair = Keypair.fromSecretKey(secretKey);
+    } catch (e2) {
+      console.error('❌ Failed to parse PRIVATE_KEY. Ensure it is Base58 string or JSON array.');
+    }
+  }
+}
 
-// 钱包客户端 (写入操作)
-export const walletClient = createWalletClient({
-  account: relayerAccount,
-  chain: monadTestnet,
-  transport: http(),
-});
+export const relayerAccount = relayerKeypair;
 
-console.log(`🔑 Relayer address: ${relayerAccount.address}`);
+if (relayerAccount) {
+  console.log(`🔑 Relayer address: ${relayerAccount.publicKey.toString()}`);
+}
+
+export const solanaConfig = {
+  rpcUrl: RPC_URL,
+  network: 'devnet' // 默认 devnet
+};
