@@ -1,16 +1,25 @@
 {
   "common": {
-    "mon": "MON",
+    "token": "代币",
     "loading": "加载中...",
-    "error": "错误"
+    "error": "错误",
+    "close": "点击关闭"
+  },
+  "room": {
+    "copyLink": "复制链接",
+    "copied": "已复制！",
+    "qrCode": "二维码",
+    "scanToJoin": "扫码加入",
+    "joining": "正在加入房间...",
+    "joinFailed": "加入房间失败"
   },
   "home": {
     "title": "MEME",
     "subtitle": "🎯 猎人 🎯",
-    "description": "在 Monad 上捕捉 Meme，赢取空投",
+    "description": "在 Solana 上捕捉 Meme，赢取空投",
     "connectWallet": "🔗 连接钱包",
     "connecting": "⏳ 连接中...",
-    "wrongNetwork": "⚠️ 网络错误！请切换到 Monad 测试网",
+    "wrongNetwork": "⚠️ 网络错误！请切换到 Solana 开发网",
     "switchNetwork": "切换网络",
     "switching": "切换中...",
     "sessionActive": "🔐 会话已激活",
@@ -20,7 +29,7 @@
     "resetSession": "重置会话",
     "resetConfirm": "确定重置本地会话密钥？这将需要重新授权。",
     "poweredBy": "技术支持",
-    "monad": "MONAD"
+    "solana": "SOLANA"
   },
   "game": {
     "title": "MEME 猎人",
@@ -28,7 +37,7 @@
     "catch": "捕获",
     "earned": "收益",
     "exit": "退出",
-    "caught": "🎉 捕获成功！+{{reward}} MON",
+    "caught": "🎉 捕获成功！+{{reward}} {{token}}",
     "escaped": "😅 逃跑了！再试一次！"
   },
   "controlBar": {
@@ -37,7 +46,15 @@
     "medium": "中",
     "large": "大",
     "cost": "费用",
-    "perHunt": "/次"
+    "perHunt": "/次",
+    "earned": "累计收益"
+  },
+  "combo": {
+    "streak": "{{count}} 连击",
+    "levelUp": "升级了！",
+    "comboLost": "连击中断！",
+    "ready": "就绪",
+    "cooldown": "冷却中"
   },
   "leaderboard": {
     "title": "🏆 排行榜",

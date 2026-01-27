@@ -1,59 +1,63 @@
 import { useTranslation } from 'react-i18next';
+import ComboDisplay from './ComboDisplay';
+import CooldownBar from './CooldownBar';
 
-interface NetConfig {
-  size: number;
-  name: string;
-  radius: number;
-  cost: number;
-  baseRate: number;
+interface ComboState {
+  comboCount: number;
+  netLevel: 'normal' | 'silver' | 'gold' | 'diamond';
+  cooldownMs: number;
+}
+
+interface CooldownStatus {
+  canHunt: boolean;
+  remainingMs: number;
+  cooldownMs: number;
 }
 
 interface ControlBarProps {
-  selectedNet: number;
-  onSelectNet: (size: number) => void;
-  netConfig: readonly NetConfig[];
+  comboState: ComboState;
+  cooldownStatus: CooldownStatus;
+  levelUp?: boolean;
+  tokenSymbol?: string;
+  totalEarned?: number;
 }
 
-export default function ControlBar({ selectedNet, onSelectNet, netConfig }: ControlBarProps) {
+export default function ControlBar({
+  comboState,
+  cooldownStatus,
+  levelUp = false,
+  tokenSymbol = 'TOKEN',
+  totalEarned = 0
+}: ControlBarProps) {
   const { t } = useTranslation();
 
-  const getNetName = (size: number) => {
-    switch (size) {
-      case 0: return t('controlBar.small');
-      case 1: return t('controlBar.medium');
-      case 2: return t('controlBar.large');
-      default: return '';
-    }
-  };
-
   return (
-    <footer className="border-t border-white/10 px-6 py-4">
-      <div className="flex items-center justify-between max-w-4xl mx-auto">
-        <div className="flex items-center gap-2">
-          <span className="text-gray-400">{t('controlBar.netSize')}:</span>
-          <div className="flex gap-2">
-            {netConfig.map((net) => (
-              <button
-                key={net.size}
-                onClick={() => onSelectNet(net.size)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  selectedNet === net.size
-                    ? 'bg-monad-purple text-white shadow-lg shadow-monad-purple/30'
-                    : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                }`}
-              >
-                {net.size === 0 ? '🔘' : net.size === 1 ? '⚪' : '⭕'} {getNetName(net.size)}
-              </button>
-            ))}
-          </div>
+    <footer className="relative z-20 border-t border-white/5 bg-background/90 backdrop-blur-md px-4 sm:px-6 py-3 sm:py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+      <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-0 sm:justify-between max-w-5xl mx-auto">
+
+        {/* 连击显示 */}
+        <ComboDisplay comboState={comboState} levelUp={levelUp} />
+
+        {/* 冷却进度条 */}
+        <div className="flex items-center gap-4">
+          <CooldownBar
+            cooldownMs={cooldownStatus.cooldownMs}
+            remainingMs={cooldownStatus.remainingMs}
+            canHunt={cooldownStatus.canHunt}
+          />
         </div>
 
-      <div className="flex items-center gap-4">
-          <span className="text-gray-400">{t('controlBar.cost')}:</span>
-          <span className="text-xl font-semibold text-monad-cyan">
-            {netConfig[selectedNet]?.cost || 100} TOKENS
+        {/* 累计收益显示 */}
+        <div className="flex items-center gap-2 sm:gap-3 bg-black/40 px-3 sm:px-4 py-2 rounded-lg border border-white/5">
+          <span className="text-secondary font-display uppercase tracking-widest text-[10px] sm:text-xs">
+            {t('controlBar.earned')}
           </span>
-          <span className="text-gray-500">{t('controlBar.perHunt')}</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-lg sm:text-xl font-bold text-cta font-display drop-shadow-[0_0_5px_rgba(16,185,129,0.5)]">
+              {totalEarned.toLocaleString()}
+            </span>
+            <span className="text-xs text-text/50 font-mono">{tokenSymbol}</span>
+          </div>
         </div>
       </div>
     </footer>

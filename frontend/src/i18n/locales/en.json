@@ -1,16 +1,25 @@
 {
   "common": {
-    "mon": "MON",
+    "token": "TOKEN",
     "loading": "Loading...",
-    "error": "Error"
+    "error": "Error",
+    "close": "Click to close"
+  },
+  "room": {
+    "copyLink": "Copy Link",
+    "copied": "Copied!",
+    "qrCode": "QR Code",
+    "scanToJoin": "Scan to Join",
+    "joining": "Joining room...",
+    "joinFailed": "Failed to join room"
   },
   "home": {
     "title": "MEME",
     "subtitle": "🎯 HUNTER 🎯",
-    "description": "Catch Memes, Win Airdrops on Monad",
+    "description": "Catch Memes, Win Airdrops on Solana",
     "connectWallet": "🔗 CONNECT WALLET",
     "connecting": "⏳ Connecting...",
-    "wrongNetwork": "⚠️ Wrong Network! Please switch to Monad Testnet",
+    "wrongNetwork": "⚠️ Wrong Network! Please switch to Solana Devnet",
     "switchNetwork": "Switch Network",
     "switching": "Switching...",
     "sessionActive": "🔐 Session Active",
@@ -20,7 +29,7 @@
     "resetSession": "Reset Session",
     "resetConfirm": "Reset local session key? This will require re-authorization.",
     "poweredBy": "Powered by",
-    "monad": "MONAD"
+    "solana": "SOLANA"
   },
   "game": {
     "title": "MEME HUNTER",
@@ -28,7 +37,7 @@
     "catch": "Catch",
     "earned": "Earned",
     "exit": "Exit",
-    "caught": "🎉 Caught! +{{reward}} MON",
+    "caught": "🎉 Caught! +{{reward}} {{token}}",
     "escaped": "😅 Escaped! Try again!"
   },
   "controlBar": {
@@ -37,7 +46,15 @@
     "medium": "Medium",
     "large": "Large",
     "cost": "Cost",
-    "perHunt": "/hunt"
+    "perHunt": "/hunt",
+    "earned": "Earned"
+  },
+  "combo": {
+    "streak": "{{count}} Streak",
+    "levelUp": "Level Up!",
+    "comboLost": "Combo Lost!",
+    "ready": "Ready",
+    "cooldown": "Cooldown"
   },
   "leaderboard": {
     "title": "🏆 Leaderboard",

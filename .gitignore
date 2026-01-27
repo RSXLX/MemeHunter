@@ -37,3 +37,9 @@ Cargo.lock
 **/*.rs.bk
 .anchor/
 test-ledger/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+server/data/

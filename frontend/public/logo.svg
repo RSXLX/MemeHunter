@@ -1,0 +1,67 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Coin Gradient -->
+    <linearGradient id="gold-gradient" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FCD34D" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+    <linearGradient id="neon-glow" x1="0" y1="0" x2="512" y2="512">
+      <stop offset="0%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#F43F5E" />
+    </linearGradient>
+    <filter id="pixel-block-shadow">
+      <feDropShadow dx="4" dy="4" stdDeviation="0" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Outer Coin Border (Pixelated Style / Blocky Circle) -->
+  <!-- Using a rough circle made of rects or just a thick stroke with a blocky feeling -->
+  <!-- Simplest "Meme Coin" base is a solid circle with a rim -->
+  
+  <!-- Outer Rim Shadow -->
+  <circle cx="260" cy="260" r="230" fill="#0F0F23" />
+  
+  <!-- Main Coin Body -->
+  <circle cx="256" cy="256" r="230" fill="url(#gold-gradient)" stroke="#000" stroke-width="12" />
+  
+  <!-- Inner Rim Highlight -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#FDE68A" stroke-width="8" stroke-dasharray="20 10" opacity="0.6"/>
+
+  <!-- "Meme" Pattern Background inside coin -->
+  <pattern id="dot-pattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+    <circle cx="20" cy="20" r="2" fill="#B45309" opacity="0.3"/>
+  </pattern>
+  <circle cx="256" cy="256" r="230" fill="url(#dot-pattern)" />
+
+  <!-- Pixel Art Mascot (Abstract Wolf/Hunter Face) -->
+  <!-- Constructed using <rect> for that 8-bit feel -->
+  <g transform="translate(136, 136) scale(12)" filter="url(#pixel-block-shadow)">
+    <!-- 20x20 Grid canvas assumption -->
+    
+    <!-- Ears -->
+    <rect x="3" y="1" width="3" height="4" fill="#1F2937"/>
+    <rect x="14" y="1" width="3" height="4" fill="#1F2937"/>
+    <rect x="4" y="2" width="1" height="2" fill="#F43F5E"/> <!-- Ear inner -->
+    <rect x="15" y="2" width="1" height="2" fill="#F43F5E"/>
+
+    <!-- Head Shape -->
+    <rect x="2" y="5" width="16" height="11" fill="#1F2937"/>
+    
+    <!-- Sunglasses (Cool Meme Vibe like "Deal With It") -->
+    <rect x="3" y="7" width="14" height="3" fill="#000"/>
+    <rect x="4" y="7" width="4" height="2" fill="#7C3AED"/> <!-- Reflection Left -->
+    <rect x="12" y="7" width="4" height="2" fill="#7C3AED"/> <!-- Reflection Right -->
+    
+    <!-- Snout -->
+    <rect x="7" y="10" width="6" height="4" fill="#374151"/>
+    <rect x="9" y="13" width="2" height="1" fill="#000"/> <!-- Nose -->
+    
+    <!-- Mouth / Smirk -->
+    <path d="M 8 15 H 12" stroke="#FFF" stroke-width="1" />
+  </g>
+
+  <!-- Text "MH" or Symbol at bottom -->
+  <path d="M220 400 L230 360 L245 390 L265 360 L275 390 L290 360 L300 400" fill="none" stroke="#000" stroke-width="8" stroke-linecap="square" stroke-linejoin="bevel"/>
+  
+</svg>

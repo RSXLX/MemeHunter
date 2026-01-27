@@ -5,13 +5,16 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-meme_hunter = "11111111111111111111111111111111"
+meme_hunter = "BQU16njpJtGeTt6gG8NbXTmPWVAcMjszRPvr3uSvL7Cf"
+
+[programs.devnet]
+meme_hunter = "BQU16njpJtGeTt6gG8NbXTmPWVAcMjszRPvr3uSvL7Cf"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

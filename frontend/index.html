@@ -1,13 +1,73 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>frontend</title>
+  <script src="https://bundle.run/buffer@6.0.3"></script>
+  <script>
+    window.global = window;
+    window.Buffer = window.buffer.Buffer;
+    window.process = { env: {} };
+  </script>
+  <script>
+    window.onerror = function (msg, url, lineNo, columnNo, error) {
+      var str = msg.toLowerCase();
+      var substring = "script error";
+      if (str.indexOf(substring) > -1) {
+        alert('Script Error: See Browser Console for Detail');
+      } else {
+        var message = [
+          'Message: ' + msg,
+          'URL: ' + url,
+          'Line: ' + lineNo,
+          'Column: ' + columnNo,
+          'Error object: ' + JSON.stringify(error)
+        ].join(' - ');
+
+        var div = document.createElement('div');
+        div.style.position = 'fixed';
+        div.style.top = '0';
+        div.style.left = '0';
+        div.style.width = '100vw';
+        div.style.height = '100vh';
+        div.style.backgroundColor = 'rgba(255,0,0,0.9)';
+        div.style.color = 'white';
+        div.style.zIndex = '999999';
+        div.style.padding = '20px';
+        div.style.overflow = 'auto';
+        div.style.fontFamily = 'monospace';
+        div.innerHTML = '<h1>Global Javascript Error</h1><pre>' + message + '</pre>';
+        document.body.appendChild(div);
+      }
+      return false;
+    };
+
+    window.onunhandledrejection = function (event) {
+      var message = 'Unhandled Rejection: ' + event.reason;
+      var div = document.createElement('div');
+      div.style.position = 'fixed';
+      div.style.top = '50%';
+      div.style.left = '0';
+      div.style.width = '100vw';
+      div.style.height = '50vh';
+      div.style.backgroundColor = 'rgba(100,0,0,0.9)';
+      div.style.color = 'white';
+      div.style.zIndex = '999999';
+      div.style.padding = '20px';
+      div.style.overflow = 'auto';
+      div.style.fontFamily = 'monospace';
+      div.innerHTML = '<h1>Unhandled Promise Rejection</h1><pre>' + message + '</pre>';
+      document.body.appendChild(div);
+    };
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

@@ -1,27 +1,24 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CANVAS_CONFIG, MEME_CONFIG, RARITY_COLORS, NET_CONFIG } from '../../utils/constants';
-import { DEFAULT_ROOM_ADDRESS, DEFAULT_TOKEN_MINT } from '../../config/solana';
-import { detectCollision, getCanvasCoordinates } from '../../game/collision';
-import { 
-  drawAnimations, 
-  filterActiveAnimations, 
-  createAnimation, 
-  type Animation 
+import { detectCollision } from '../../game/collision';
+import {
+  drawAnimations,
+  filterActiveAnimations,
+  createAnimation,
+  type Animation
 } from '../../game/animations';
 import { memeInterpolator, type InterpolatedMeme } from '../../game/memeInterpolator';
-import { useHunt } from '../../hooks/useHunt';
-import { useSolanaSession } from '../../hooks/useSolanaSession';
-import { useGameSocket, type NetAction } from '../../hooks/useGameSocket';
+import { useResponsiveCanvas } from '../../hooks/useResponsiveCanvas';
 
 interface GameCanvasProps {
   selectedNet: number;
   onHuntResult?: (
-    success: boolean, 
-    reward: number, 
-    memeId?: number, 
-    memeEmoji?: string, 
-    netCost?: number, 
+    success: boolean,
+    reward: number,
+    memeId?: number,
+    memeEmoji?: string,
+    netCost?: number,
     txHash?: string
   ) => void;
 }
@@ -32,33 +29,100 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
   const animationsRef = useRef<Animation[]>([]);
   const animationFrameRef = useRef<number | undefined>(undefined);
   const isHuntingRef = useRef<boolean>(false);
-  
-  const { hunt, isHunting } = useHunt();
-  const { isValid: hasSessionKey } = useSolanaSession();
-  const { 
-    gameState, 
-    remoteActions, 
-    emitNetLaunch, 
-    emitHuntResult,
-    emitMemeCaptured,
-    isConnected 
-  } = useGameSocket();
 
-  // 当前帧的插值后 meme 列表（用于绘制）
+  // 响应式画布尺寸
+  const { width: displayWidth, height: displayHeight, isMobile } = useResponsiveCanvas();
+
+  // Mock State
+  const isConnected = true;
   const interpolatedMemesRef = useRef<InterpolatedMeme[]>([]);
 
-  // 当服务端数据更新时，同步到插值器
+  // 物理状态存储
+  const physicsStatesRef = useRef<Map<string, import('../../game/MemePhysics').MemePhysicsState>>(new Map());
+  const frameCountRef = useRef(0);
+  const lastUpdateTimeRef = useRef(performance.now());
+
+  // ---- PHYSICS-BASED GAME LOOP ----
+
   useEffect(() => {
-    if (gameState?.memes) {
-      memeInterpolator.updateFromServer(gameState.memes);
-    }
-  }, [gameState?.memes]);
+    // 动态导入物理引擎
+    import('../../game/MemePhysics').then(({ initMemePhysics, updateMemePhysics }) => {
+      // Generate initial memes with physics
+      const generateMockMemes = () => {
+        const memes = [];
+        for (let i = 0; i < 6; i++) {
+          const config = MEME_CONFIG[i % MEME_CONFIG.length];
+          const x = CANVAS_CONFIG.width * 0.2 + Math.random() * CANVAS_CONFIG.width * 0.6;
+          const y = CANVAS_CONFIG.height * 0.2 + Math.random() * CANVAS_CONFIG.height * 0.6;
+
+          // 根据稀有度设置速度系数
+          const speedMultiplier = config.speed / 4;
+
+          memes.push({
+            id: `mock-${i}`,
+            memeId: config.id,
+            emoji: config.emoji,
+            x,
+            y,
+          });
+
+          // 初始化物理状态
+          physicsStatesRef.current.set(`mock-${i}`, initMemePhysics(x, y, speedMultiplier));
+        }
+        return memes;
+      };
+
+      // Feed initial data
+      memeInterpolator.updateFromServer(generateMockMemes());
+
+      // Physics update loop (simulate server updates at 60fps physics, broadcast at 10fps)
+      let physicsFrame = 0;
+
+      const updatePhysics = () => {
+        const now = performance.now();
+        const deltaTime = Math.min((now - lastUpdateTimeRef.current) / 1000, 0.1); // Cap at 100ms
+        lastUpdateTimeRef.current = now;
+        frameCountRef.current++;
+        physicsFrame++;
+
+        // Update physics for each meme
+        physicsStatesRef.current.forEach((state, id) => {
+          const newState = updateMemePhysics(state, deltaTime, frameCountRef.current);
+          physicsStatesRef.current.set(id, newState);
+        });
+
+        // Broadcast to interpolator every ~100ms (every 6 frames at 60fps)
+        if (physicsFrame % 6 === 0) {
+          const mockUpdate: any[] = [];
+
+          physicsStatesRef.current.forEach((state, id) => {
+            const memeData = memeInterpolator['memes'].get(id);
+            if (memeData) {
+              mockUpdate.push({
+                id,
+                memeId: memeData.memeId,
+                emoji: memeData.emoji,
+                x: state.x,
+                y: state.y,
+              });
+            }
+          });
+
+          memeInterpolator.updateFromServer(mockUpdate);
+        }
+      };
+
+      const interval = setInterval(updatePhysics, 16); // ~60fps physics
+      return () => clearInterval(interval);
+    });
+  }, []);
+  // -----------------------------
 
   // 绘制函数
   const draw = useCallback((ctx: CanvasRenderingContext2D) => {
     // ... (省略未变更的绘制代码，保持原有逻辑) 
     const currentTime = performance.now();
-    
+
     // 清空画布
     ctx.fillStyle = 'rgba(15, 15, 35, 0.95)';
     ctx.fillRect(0, 0, CANVAS_CONFIG.width, CANVAS_CONFIG.height);
@@ -88,10 +152,37 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
     ctx.fillStyle = '#fff';
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(isConnected ? t('canvas.synced') : t('canvas.offline'), 35, 24);
+    ctx.fillText(isConnected ? "MOCK MODE" : t('canvas.offline'), 35, 24);
 
     // 更新插值器并获取当前帧的 meme 位置
     interpolatedMemesRef.current = memeInterpolator.update();
+
+    // 绘制轨迹线（在 Meme 之前绘制）
+    interpolatedMemesRef.current.forEach((meme: InterpolatedMeme) => {
+      const config = MEME_CONFIG.find((m) => m.id === meme.memeId);
+      if (!config) return;
+
+      const physicsState = physicsStatesRef.current.get(meme.id);
+      if (physicsState && physicsState.trail.length > 1) {
+        const glowColor = RARITY_COLORS[config.rarity as keyof typeof RARITY_COLORS] || '#9ca3af';
+
+        // 绘制轨迹
+        ctx.beginPath();
+        ctx.moveTo(physicsState.trail[0].x, physicsState.trail[0].y);
+
+        for (let i = 1; i < physicsState.trail.length; i++) {
+          const point = physicsState.trail[i];
+          ctx.lineTo(point.x, point.y);
+        }
+
+        // 渐变轨迹颜色
+        ctx.strokeStyle = glowColor + '40'; // 25% 透明度
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+      }
+    });
 
     // 绘制 Meme（使用插值后的平滑位置）
     interpolatedMemesRef.current.forEach((meme: InterpolatedMeme) => {
@@ -120,9 +211,6 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
       }
     });
 
-    // 绘制其他玩家的捕网动作
-    drawRemoteNetActions(ctx, remoteActions, currentTime);
-
     // 绘制本地动画
     animationsRef.current = filterActiveAnimations(animationsRef.current, currentTime);
     drawAnimations(ctx, animationsRef.current, currentTime);
@@ -131,65 +219,7 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
     ctx.strokeStyle = 'rgba(139, 92, 246, 0.5)';
     ctx.lineWidth = 2;
     ctx.strokeRect(0, 0, CANVAS_CONFIG.width, CANVAS_CONFIG.height);
-  }, [remoteActions, isConnected, t]);
-
-  // 绘制其他玩家的捕网动作
-  const drawRemoteNetActions = (
-    ctx: CanvasRenderingContext2D, 
-    actions: NetAction[], 
-    currentTime: number
-  ) => {
-    actions.forEach((action) => {
-      const elapsed = currentTime - action.timestamp;
-      if (elapsed > 2000) return; // 超过 2 秒不显示
-
-      const progress = Math.min(elapsed / 500, 1);
-      const config = NET_CONFIG[action.netSize] || NET_CONFIG[1];
-      const radius = config.radius * progress;
-      const alpha = 1 - (elapsed / 2000);
-
-      ctx.save();
-      
-      // 使用玩家的网颜色
-      ctx.strokeStyle = action.color || '#3b82f6';
-      ctx.lineWidth = 2;
-      ctx.globalAlpha = alpha;
-
-      // 绘制捕网圆圈
-      ctx.beginPath();
-      ctx.arc(action.x, action.y, radius, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // 绘制网格线
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(action.x - radius, action.y);
-      ctx.lineTo(action.x + radius, action.y);
-      ctx.moveTo(action.x, action.y - radius);
-      ctx.lineTo(action.x, action.y + radius);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // 绘制玩家昵称
-      ctx.fillStyle = action.color || '#3b82f6';
-      ctx.font = '12px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(action.nickname, action.x, action.y - radius - 10);
-
-      // 绘制结果标记
-      if (action.result) {
-        ctx.font = '24px serif';
-        ctx.textAlign = 'center';
-        if (action.result === 'catch') {
-          ctx.fillText('✅', action.x, action.y);
-        } else if (action.result === 'escape') {
-          ctx.fillText('💨', action.x, action.y);
-        }
-      }
-
-      ctx.restore();
-    });
-  };
+  }, [t]);
 
   // 游戏循环
   useEffect(() => {
@@ -213,17 +243,29 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
     };
   }, [draw]);
 
-  // 点击处理 - 狩猎
-  const handleClick = useCallback(
-    async (e: React.MouseEvent<HTMLCanvasElement>) => {
-      const canvas = canvasRef.current;
-      if (!canvas || isHuntingRef.current || isHunting) return;
+  // 获取标准化坐标（处理缩放）
+  const getScaledCoordinates = useCallback((clientX: number, clientY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
 
-      const { x, y } = getCanvasCoordinates(e, canvas);
-      
-      // 广播捕网动作给其他玩家
-      emitNetLaunch(x, y, selectedNet);
-      
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = CANVAS_CONFIG.width / rect.width;
+    const scaleY = CANVAS_CONFIG.height / rect.height;
+
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
+  }, []);
+
+  // 点击处理 - 狩猎 (同时支持鼠标和触控)
+  const handleHunt = useCallback(
+    async (clientX: number, clientY: number) => {
+      const canvas = canvasRef.current;
+      if (!canvas || isHuntingRef.current) return;
+
+      const { x, y } = getScaledCoordinates(clientX, clientY);
+
       // 使用插值器的 meme 列表进行碰撞检测（使用渲染位置，即玩家的实际点击位置）
       const currentMemes = memeInterpolator.getMemesForCollision();
       const localMemes = currentMemes.map((m) => ({
@@ -235,10 +277,10 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
         vy: 0,
         size: 40,
       }));
-      
+
       // 碰撞检测
       const collision = detectCollision(x, y, selectedNet, localMemes);
-      
+
       // 添加捕网动画
       const netAnim = createAnimation('netLaunch', x, y, selectedNet);
       animationsRef.current = [...animationsRef.current, netAnim];
@@ -249,101 +291,102 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
           const emptyAnim = createAnimation('emptyNet', x, y, selectedNet);
           animationsRef.current = [...animationsRef.current, emptyAnim];
         }, 250);
-        emitHuntResult(x, y, selectedNet, 'empty');
-        // 空网也会消耗 Gas，这里 cost 是估计值
+
         onHuntResult?.(false, 0, undefined, undefined, NET_CONFIG[selectedNet].cost);
         return;
       }
 
-      // 有 Meme - 需要 Session Key
-      if (!hasSessionKey) {
-        console.log('No session key, skipping hunt');
-        return;
-      }
-
+      // 模拟捕获处理
       isHuntingRef.current = true;
       const targetMeme = collision.meme;
       const memeConfig = MEME_CONFIG.find(m => m.id === targetMeme.type);
 
-      try {
-        // 调用 Relayer 进行狩猎
-        const result = await hunt(targetMeme.type, selectedNet, DEFAULT_ROOM_ADDRESS, DEFAULT_TOKEN_MINT);
+      setTimeout(() => {
+        // 模拟 80% 成功率
+        const isSuccess = Math.random() > 0.2;
+        const reward = memeConfig?.reward || 0;
 
-        if (result) {
-          if (result.success) {
-            // 捕获成功
-            const captureAnim = createAnimation(
-              'capture', 
-              targetMeme.x, 
-              targetMeme.y, 
-              selectedNet, 
-              targetMeme, 
-              true, 
-              result.reward
-            );
-            animationsRef.current = [...animationsRef.current, captureAnim];
-            
-            // 通知服务端 Meme 被捕获 (同步移除 + 更新排行榜)
-            emitMemeCaptured(targetMeme.id, result.reward);
-            
-            emitHuntResult(x, y, selectedNet, 'catch', targetMeme.type);
-            onHuntResult?.(
-              true, 
-              result.reward, 
-              targetMeme.type, 
-              memeConfig?.emoji, 
-              NET_CONFIG[selectedNet].cost, 
-              result.txHash
-            );
-          } else {
-            // 逃脱
-            const escapeAnim = createAnimation(
-              'escape', 
-              targetMeme.x, 
-              targetMeme.y, 
-              selectedNet, 
-              targetMeme, 
-              false
-            );
-            animationsRef.current = [...animationsRef.current, escapeAnim];
-            
-            emitHuntResult(x, y, selectedNet, 'escape', targetMeme.type);
-            onHuntResult?.(
-              false, 
-              0, 
-              targetMeme.type, 
-              memeConfig?.emoji, 
-              NET_CONFIG[selectedNet].cost, 
-              result.txHash
-            );
-          }
+        if (isSuccess) {
+          // 捕获成功
+          const captureAnim = createAnimation(
+            'capture',
+            targetMeme.x,
+            targetMeme.y,
+            selectedNet,
+            targetMeme,
+            true,
+            reward
+          );
+          animationsRef.current = [...animationsRef.current, captureAnim];
 
-          // 空投触发 (暂未实现)
-          /* if (result.airdropTriggered && result.airdropReward) {
-            console.log(`🎁 Airdrop triggered! +${result.airdropReward} MON`);
-          } */
+          // 移除被捕获的 meme (前端模拟移除)
+          memeInterpolator['memes'].delete(targetMeme.id); // hack access
+
+          onHuntResult?.(
+            true,
+            reward,
+            targetMeme.type,
+            memeConfig?.emoji,
+            NET_CONFIG[selectedNet].cost,
+            "0x_mock_tx_hash"
+          );
+        } else {
+          // 逃脱
+          const escapeAnim = createAnimation(
+            'escape',
+            targetMeme.x,
+            targetMeme.y,
+            selectedNet,
+            targetMeme,
+            false
+          );
+          animationsRef.current = [...animationsRef.current, escapeAnim];
+
+          onHuntResult?.(
+            false,
+            0,
+            targetMeme.type,
+            memeConfig?.emoji,
+            NET_CONFIG[selectedNet].cost,
+            "0x_mock_tx_hash"
+          );
         }
-      } catch (error) {
-        console.error('Hunt failed:', error);
-      } finally {
-      isHuntingRef.current = false;
-      }
+        isHuntingRef.current = false;
+      }, 500);
+
     },
-    [selectedNet, hunt, isHunting, hasSessionKey, onHuntResult, emitNetLaunch, emitHuntResult, emitMemeCaptured]
+    [selectedNet, onHuntResult, getScaledCoordinates]
   );
 
+  // 鼠标点击事件
+  const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    handleHunt(e.clientX, e.clientY);
+  }, [handleHunt]);
+
+  // 触控事件
+  const handleTouch = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault(); // 防止双击缩放
+    const touch = e.touches[0];
+    if (touch) {
+      handleHunt(touch.clientX, touch.clientY);
+    }
+  }, [handleHunt]);
+
   return (
-    <canvas
-      ref={canvasRef}
-      width={CANVAS_CONFIG.width}
-      height={CANVAS_CONFIG.height}
-      onClick={handleClick}
-      className={`rounded-xl ${isHunting ? 'cursor-wait' : 'cursor-crosshair'}`}
-      style={{ 
-        width: CANVAS_CONFIG.width, 
-        height: CANVAS_CONFIG.height,
-        maxWidth: '100%',
-      }}
-    />
+    <div className={`relative ${isMobile ? 'w-full' : ''}`}>
+      <canvas
+        ref={canvasRef}
+        width={CANVAS_CONFIG.width}
+        height={CANVAS_CONFIG.height}
+        onClick={handleClick}
+        onTouchStart={handleTouch}
+        className="rounded-xl cursor-crosshair touch-none"
+        style={{
+          width: displayWidth,
+          height: displayHeight,
+          maxWidth: '100%',
+        }}
+      />
+    </div>
   );
 }

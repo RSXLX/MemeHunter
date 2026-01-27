@@ -1,154 +1,223 @@
 @import "tailwindcss";
 
+/* Import Design System Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap');
+/* Kept for existing components until fully migrated */
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Russo+One&display=swap');
+
 /* 全局样式 */
 :root {
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Exo 2', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
   font-weight: 400;
+
+  /* Design System Colors */
+  --color-primary: #7C3AED;
+  --color-secondary: #A78BFA;
+  --color-cta: #F43F5E;
+  --color-background: #0F0F23;
+  --color-text: #E2E8F0;
+
+  /* Legacy Vars Mapping */
+  --color-solana-purple: #7C3AED;
+  --color-solana-blue: #3b82f6;
+  --color-solana-cyan: #06b6d4;
+
   color-scheme: dark;
-  color: rgba(255, 255, 255, 0.95);
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  color: var(--color-text);
+  background-color: var(--color-background);
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* 自定义颜色变量 */
-  --color-monad-purple: #8b5cf6;
-  --color-monad-blue: #3b82f6;
-  --color-monad-cyan: #06b6d4;
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  background-color: var(--color-background);
+  /* Optional: Subtle gradient overlay */
+  background-image: linear-gradient(135deg, #0F0F23 0%, #1a1a2e 100%);
 }
 
 #root {
   min-height: 100vh;
 }
 
-/* 自定义滚动条 */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.5);
+  background: var(--color-primary);
   border-radius: 4px;
+  opacity: 0.5;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.7);
+  background: var(--color-secondary);
 }
 
-/* 局部自定义滚动条 */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
+/* Design System Component Specs */
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.3);
-  border-radius: 2px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.5);
-}
-
-/* 自定义工具类 */
+/* Buttons */
 .btn-primary {
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(to right, var(--color-monad-purple), var(--color-monad-blue));
+  background: var(--color-cta);
   color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
   font-weight: 600;
-  border-radius: 0.75rem;
-  box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.3);
-  transition: all 0.3s;
+  transition: all 200ms ease;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 4px 10px rgba(244, 63, 94, 0.3);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 10px 25px -3px rgba(139, 92, 246, 0.5);
-  transform: scale(1.05);
-}
-
-.btn-primary:active {
-  transform: scale(0.95);
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 15px rgba(244, 63, 94, 0.5);
 }
 
 .btn-secondary {
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  font-weight: 500;
-  border-radius: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.2s;
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 200ms ease;
+  cursor: pointer;
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(124, 58, 237, 0.1);
+  transform: translateY(-1px);
 }
 
+/* Cards */
 .card {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(15, 15, 35, 0.6);
+  /* Slightly transparent for backdrop filter */
   backdrop-filter: blur(12px);
-  border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 1.5rem;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid rgba(167, 139, 250, 0.1);
+  /* Secondary color hint */
+  box-shadow: var(--shadow-md);
+  transition: all 200ms ease;
 }
 
-.glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(167, 139, 250, 0.3);
 }
 
-/* 自定义颜色 */
-.text-monad-purple { color: var(--color-monad-purple); }
-.text-monad-blue { color: var(--color-monad-blue); }
-.text-monad-cyan { color: var(--color-monad-cyan); }
-.bg-monad-purple { background-color: var(--color-monad-purple); }
-.bg-monad-blue { background-color: var(--color-monad-blue); }
-.bg-monad-cyan { background-color: var(--color-monad-cyan); }
-.from-monad-purple { --tw-gradient-from: var(--color-monad-purple); }
-.to-monad-blue { --tw-gradient-to: var(--color-monad-blue); }
-.to-monad-cyan { --tw-gradient-to: var(--color-monad-cyan); }
-.via-monad-blue { --tw-gradient-via: var(--color-monad-blue); }
-.shadow-monad-purple\/30 { box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.3); }
-.shadow-monad-purple\/50 { box-shadow: 0 10px 25px -3px rgba(139, 92, 246, 0.5); }
+/* Inputs */
+.input {
+  padding: 12px 16px;
+  border: 1px solid #475569;
+  background: rgba(15, 15, 35, 0.8);
+  color: var(--color-text);
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+}
+
+/* Typography Utils */
+.font-display {
+  font-family: 'Orbitron', sans-serif;
+}
+
+.font-body {
+  font-family: 'Exo 2', sans-serif;
+}
+
 
 /* Meme 漂浮动画 */
 @keyframes float-1 {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  25% { transform: translate(10px, -15px) rotate(5deg); }
-  50% { transform: translate(-5px, -25px) rotate(-3deg); }
-  75% { transform: translate(-15px, -10px) rotate(3deg); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  25% {
+    transform: translate(10px, -15px) rotate(5deg);
+  }
+
+  50% {
+    transform: translate(-5px, -25px) rotate(-3deg);
+  }
+
+  75% {
+    transform: translate(-15px, -10px) rotate(3deg);
+  }
 }
 
 @keyframes float-2 {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  33% { transform: translate(-20px, -10px) rotate(-5deg); }
-  66% { transform: translate(15px, -20px) rotate(5deg); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  33% {
+    transform: translate(-20px, -10px) rotate(-5deg);
+  }
+
+  66% {
+    transform: translate(15px, -20px) rotate(5deg);
+  }
 }
 
 @keyframes float-3 {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(10px, -30px); }
+
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  50% {
+    transform: translate(10px, -30px);
+  }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
-  50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.8); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.8);
+  }
 }
 
 .meme-float-1 {
@@ -177,4 +246,321 @@ body {
 
 .animate-pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ============================================
+   CYBERPUNK STYLES (Retro-Futurism)
+   Colors: #7C3AED (Primary), #F43F5E (CTA), #0F0F23 (BG)
+   Fonts: Russo One + Chakra Petch
+   ============================================ */
+
+/* Import Google Fonts - Already imported at top */
+/* @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Russo+One&display=swap'); */
+
+/* Custom Font Classes */
+.font-russo {
+  font-family: 'Russo One', sans-serif;
+}
+
+.font-chakra {
+  font-family: 'Chakra Petch', sans-serif;
+}
+
+/* Cyberpunk Container */
+.cyberpunk-container {
+  font-family: 'Chakra Petch', sans-serif;
+  position: relative;
+  background: #0F0F23;
+}
+
+/* CRT Scanlines Overlay */
+.crt-scanlines {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+  background: repeating-linear-gradient(0deg,
+      rgba(0, 0, 0, 0.15),
+      rgba(0, 0, 0, 0.15) 1px,
+      transparent 1px,
+      transparent 2px);
+  animation: scanlines 8s linear infinite;
+}
+
+@keyframes scanlines {
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+/* Animated Cyber Grid Background */
+.cyber-grid {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: grid-move 15s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes grid-move {
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(50px);
+  }
+}
+
+/* Neon Text Effect */
+.neon-text {
+  text-shadow:
+    0 0 10px rgba(124, 58, 237, 0.8),
+    0 0 20px rgba(124, 58, 237, 0.6),
+    0 0 30px rgba(124, 58, 237, 0.4),
+    0 0 40px rgba(124, 58, 237, 0.2);
+}
+
+/* Cyber Title with Glitch Effect */
+.cyber-title {
+  font-family: 'Russo One', sans-serif;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #7C3AED 0%, #F43F5E 50%, #A78BFA 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow:
+    0 0 30px rgba(124, 58, 237, 0.5),
+    0 0 60px rgba(244, 63, 94, 0.3);
+  position: relative;
+}
+
+/* Glitch Animation */
+.glitch-effect {
+  position: relative;
+  animation: glitch-skew 5s infinite linear alternate-reverse;
+}
+
+.glitch-effect::before,
+.glitch-effect::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #7C3AED 0%, #F43F5E 50%, #A78BFA 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.glitch-effect::before {
+  left: 2px;
+  text-shadow: -2px 0 #F43F5E;
+  animation: glitch-anim-1 3s infinite linear alternate-reverse;
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+}
+
+.glitch-effect::after {
+  left: -2px;
+  text-shadow: -2px 0 #7C3AED;
+  animation: glitch-anim-2 2s infinite linear alternate-reverse;
+  clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
+}
+
+@keyframes glitch-anim-1 {
+
+  0%,
+  100% {
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+  }
+
+  10% {
+    clip-path: polygon(0 10%, 100% 10%, 100% 60%, 0 60%);
+  }
+
+  20% {
+    clip-path: polygon(0 30%, 100% 30%, 100% 55%, 0 55%);
+  }
+
+  30% {
+    clip-path: polygon(0 20%, 100% 20%, 100% 70%, 0 70%);
+  }
+}
+
+@keyframes glitch-anim-2 {
+
+  0%,
+  100% {
+    clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
+  }
+
+  15% {
+    clip-path: polygon(0 70%, 100% 70%, 100% 90%, 0 90%);
+  }
+
+  30% {
+    clip-path: polygon(0 50%, 100% 50%, 100% 85%, 0 85%);
+  }
+}
+
+@keyframes glitch-skew {
+  0% {
+    transform: skew(0deg);
+  }
+
+  10% {
+    transform: skew(2deg);
+  }
+
+  20% {
+    transform: skew(-2deg);
+  }
+
+  30% {
+    transform: skew(1deg);
+  }
+
+  40% {
+    transform: skew(-1deg);
+  }
+
+  50% {
+    transform: skew(0deg);
+  }
+}
+
+/* Neon Logo */
+.neon-logo {
+  filter: drop-shadow(0 0 20px rgba(244, 63, 94, 0.7)) drop-shadow(0 0 40px rgba(124, 58, 237, 0.5));
+  animation: logo-pulse 3s ease-in-out infinite;
+}
+
+@keyframes logo-pulse {
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 20px rgba(244, 63, 94, 0.7)) drop-shadow(0 0 40px rgba(124, 58, 237, 0.5));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 30px rgba(244, 63, 94, 0.9)) drop-shadow(0 0 60px rgba(124, 58, 237, 0.7));
+  }
+}
+
+/* Neon Emoji */
+.neon-emoji {
+  filter: drop-shadow(0 0 10px rgba(124, 58, 237, 0.8));
+  transition: all 0.3s ease;
+}
+
+.neon-emoji:hover {
+  filter: drop-shadow(0 0 20px rgba(244, 63, 94, 1)) drop-shadow(0 0 30px rgba(124, 58, 237, 1));
+}
+
+/* Cyber Button */
+.cyber-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.cyber-button:hover {
+  transform: translateY(-2px);
+}
+
+.cyber-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(244, 63, 94, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.cyber-button:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Cyber Card */
+.cyber-card {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(15, 15, 35, 0.8) 100%);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow:
+    0 0 30px rgba(124, 58, 237, 0.3),
+    inset 0 0 20px rgba(124, 58, 237, 0.1);
+  transition: all 0.3s ease;
+}
+
+.cyber-card:hover {
+  box-shadow:
+    0 0 50px rgba(244, 63, 94, 0.5),
+    inset 0 0 30px rgba(124, 58, 237, 0.2);
+  transform: translateY(-5px);
+}
+
+/* Float Animation */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.6s ease-out;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+
+  .crt-scanlines,
+  .cyber-grid,
+  .glitch-effect,
+  .glitch-effect::before,
+  .glitch-effect::after,
+  .neon-logo,
+  .neon-emoji,
+  .cyber-button::before {
+    animation: none !important;
+  }
 }

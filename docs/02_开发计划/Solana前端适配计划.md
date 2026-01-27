@@ -85,3 +85,18 @@ reviewer: 用户
 1. **Buffer Polyfill**: Vite + Solana Web3.js 在浏览器端可能需要 Polyfill (`vite-plugin-node-polyfills`)。
 2. **Gas 支付**: Session Key 模式下，如果 Session Key 没钱无法发送交易。必须在授权时充值。
 
+## 五、 临时变更 (Mock Mode) - 2026-01-25
+
+为了解决开发环境 Vite + Solana Deep Dependencies (`_bn`) 的兼容性崩溃问题，前端已临时切换至 **Mock Mode (纯前端模拟模式)**。
+
+### 变更内容
+1. **Wallet Adapter 移除**: 暂时移除 `SolanaWalletProvider`，替换为本地状态模拟的 "Mock Wallet"。
+2. **Game Logic 模拟**:
+   - `Game.tsx`: 使用本地 `useState` 模拟余额和游戏统计，移除 `useGameSocket` 和 Blockchain Hook 调用。
+   - `GameCanvas.tsx`: 移除 Socket 通信，使用本地 Loop 模拟 Meme 生城、移动和捕获判定。
+   - `Home.tsx`: 模拟登录流程，移除 Session Key 授权弹窗。
+
+### 恢复计划
+待 Solana Web3.js 2.0 正式发布或 Vite 插件兼容性问题（Rollup Inject 方案）彻底解决后，从 git 历史恢复 `solana` 分支的区块链逻辑。
+
+---

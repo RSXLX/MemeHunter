@@ -2,6 +2,9 @@
 members = [
     "programs/meme-hunter"
 ]
+exclude = [
+    "programs/meme-hunter-legacy"
+]
 resolver = "2"
 
 [profile.release]

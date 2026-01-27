@@ -1,23 +1,17 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { WS_URL } from '../config/solana';
+import { WS_URL, getSessionId } from '../config/api';
 
 export interface Player {
-  address: string;
+  id: string;
   nickname: string;
-  netStyleIndex: number;
-  color: string;
-  balance?: string;
-  isHunting?: boolean;
+  balance?: number;
 }
 
 export interface NetAction {
   id: string;
-  playerAddress: string;
+  playerId: string;
   nickname: string;
-  color: string;
   x: number;
   y: number;
   netSize: number;
@@ -25,52 +19,61 @@ export interface NetAction {
   timestamp: number;
 }
 
+export interface Meme {
+  id: string;
+  memeId: number;
+  emoji: string;
+  x: number;
+  y: number;
+}
+
 export interface GameState {
-  memes: Array<{
-    id: string;
-    memeId: number;
-    emoji: string;
-    x: number;
-    y: number;
-  }>;
+  memes: Meme[];
   players: Player[];
-  actions: NetAction[];
   playerCount: number;
   timestamp: number;
 }
 
-export interface LeaderboardEntry {
-  address: string;
-  nickname: string;
-  captures: number;
-  totalReward: number;
+export interface HuntResult {
+  success: boolean;
+  result: 'catch' | 'escape' | 'empty';
+  memeId?: string;
+  reward?: number;
+  newBalance?: number;
+  message?: string;
 }
 
-export function useGameSocket() {
-  const { publicKey } = useWallet();
-  const address = publicKey?.toBase58();
-  const { connection } = useConnection();
-  const [balance, setBalance] = useState<string>('0');
-  
+export interface LeaderboardEntry {
+  rank: number;
+  nickname: string;
+  balance: number;
+  totalEarned: number;
+}
+
+interface UseGameSocketOptions {
+  roomId?: string;
+  onBalanceUpdate?: (balance: number) => void;
+}
+
+export function useGameSocket(options: UseGameSocketOptions = {}) {
+  const { roomId, onBalanceUpdate } = options;
+
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [players, setPlayers] = useState<Player[]>([]);
   const [remoteActions, setRemoteActions] = useState<NetAction[]>([]);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-
-  // Fetch balance for socket handshake
-  useEffect(() => {
-    if (publicKey) {
-      connection.getBalance(publicKey).then(lamports => {
-        setBalance((lamports / LAMPORTS_PER_SOL).toFixed(3));
-      }).catch(e => console.error(e));
-    }
-  }, [publicKey, connection]);
+  const [currentUser, setCurrentUser] = useState<Player | null>(null);
 
   // 连接 WebSocket
   useEffect(() => {
-    if (!address) return;
+    const sessionId = getSessionId();
+    if (!sessionId) {
+      console.warn('No session ID, waiting for login...');
+      return;
+    }
 
     const socket = io(WS_URL, {
       transports: ['websocket'],
@@ -82,92 +85,97 @@ export function useGameSocket() {
     socket.on('connect', () => {
       console.log('🔌 WebSocket connected');
       setIsConnected(true);
-      
-      // 加入游戏
-      socket.emit('join', {
-        address,
-        balance: balance,
-      });
-      
-      // 请求初始排行榜（必须在连接建立后发送）
-      socket.emit('requestLeaderboard');
+
+      // 使用 Session 登录
+      socket.emit('guestLogin', { sessionId });
     });
 
     socket.on('disconnect', () => {
       console.log('❌ WebSocket disconnected');
       setIsConnected(false);
+      setIsLoggedIn(false);
     });
 
-    // 玩家列表
-    socket.on('playerList', (playerList: Player[]) => {
-      setPlayers(playerList);
+    // 登录成功
+    socket.on('loginSuccess', ({ user }) => {
+      console.log('✅ WebSocket login success:', user.nickname);
+      setIsLoggedIn(true);
+      setCurrentUser(user);
+
+      // 自动加入房间
+      if (roomId) {
+        socket.emit('joinRoom', { roomId, sessionId });
+      } else {
+        // 加入默认大厅
+        socket.emit('joinRoom', { sessionId });
+      }
     });
 
-    // 新玩家加入
-    socket.on('playerJoin', (player: Player) => {
-      setPlayers((prev) => {
-        // 先过滤掉已存在的玩家，再添加新玩家
-        const filtered = prev.filter(p => p.address !== player.address);
-        return [...filtered, player];
-      });
+    socket.on('loginError', ({ message }) => {
+      console.error('WebSocket login error:', message);
     });
 
-    // 玩家离开
-    socket.on('playerLeave', ({ address: leftAddress }: { address: string }) => {
-      setPlayers((prev) => prev.filter(p => p.address !== leftAddress));
+    // 加入房间成功
+    socket.on('roomJoined', ({ roomId: joinedRoomId, user }) => {
+      console.log('🏠 Joined room:', joinedRoomId);
+      setCurrentUser(user);
     });
 
     // 游戏状态
     socket.on('gameState', (state: GameState) => {
       setGameState(state);
       if (state.players) {
-        // 使用 Map 去重，保留每个地址最新的玩家信息
-        const uniquePlayers = Array.from(
-          new Map(state.players.map(p => [p.address, p])).values()
-        );
-        setPlayers(uniquePlayers);
+        setPlayers(state.players);
       }
+    });
+
+    // 玩家加入
+    socket.on('playerJoin', ({ nickname }) => {
+      console.log(`👤 Player joined: ${nickname}`);
+    });
+
+    // 玩家离开
+    socket.on('playerLeave', ({ nickname }) => {
+      console.log(`👋 Player left: ${nickname}`);
     });
 
     // 其他玩家捕网动作
     socket.on('netLaunchBroadcast', (action: NetAction) => {
-      // 不显示自己的动作
-      if (action.playerAddress === address) return;
-      
-      setRemoteActions((prev) => {
-        // 避免重复
+      if (action.playerId === currentUser?.id) return;
+
+      setRemoteActions(prev => {
         if (prev.some(a => a.id === action.id)) return prev;
         return [...prev, action];
       });
 
-      // 2秒后清除
       setTimeout(() => {
-        setRemoteActions((prev) => prev.filter(a => a.id !== action.id));
+        setRemoteActions(prev => prev.filter(a => a.id !== action.id));
       }, 2000);
     });
 
     // 狩猎结果广播
-    socket.on('huntResultBroadcast', (action: NetAction) => {
-      if (action.playerAddress === address) return;
-      
-      setRemoteActions((prev) => {
-        const existing = prev.findIndex(a => a.id === action.id);
-        if (existing !== -1) {
-          const updated = [...prev];
-          updated[existing] = action;
-          return updated;
-        }
-        return [...prev, action];
+    socket.on('huntResultBroadcast', (data) => {
+      console.log('🎯 Hunt broadcast:', data.nickname, data.result);
+    });
+
+    // Meme 被移除
+    socket.on('memeRemoved', ({ memeId }) => {
+      setGameState(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          memes: prev.memes.filter(m => m.id !== memeId),
+        };
       });
     });
 
-    // 排行榜更新
-    socket.on('leaderboardUpdate', (data: LeaderboardEntry[]) => {
-      setLeaderboard(data);
+    // 余额更新
+    socket.on('balanceUpdate', ({ balance }) => {
+      onBalanceUpdate?.(balance);
     });
 
-    // 初始排行榜
-    socket.on('leaderboard', (data: LeaderboardEntry[]) => {
+    // 排行榜
+    socket.on('leaderboardUpdate', (data: LeaderboardEntry[]) => {
       setLeaderboard(data);
     });
 
@@ -175,44 +183,85 @@ export function useGameSocket() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [address, balance]);
+  }, [roomId, onBalanceUpdate]);
 
   // 发送捕网动作
   const emitNetLaunch = useCallback((x: number, y: number, netSize: number) => {
     socketRef.current?.emit('netLaunch', { x, y, netSize });
   }, []);
 
-  // 发送狩猎结果
+  // 发送狩猎请求
+  const emitHunt = useCallback((
+    x: number,
+    y: number,
+    netSize: number,
+    memeId: string
+  ): Promise<HuntResult> => {
+    return new Promise((resolve) => {
+      socketRef.current?.emit('hunt', { x, y, netSize, memeId });
+
+      // 监听单次结果
+      const handleResult = (result: HuntResult) => {
+        socketRef.current?.off('huntResult', handleResult);
+        resolve(result);
+
+        // 如果捕获成功，通知余额更新
+        if (result.success && result.newBalance !== undefined) {
+          onBalanceUpdate?.(result.newBalance);
+        }
+      };
+
+      socketRef.current?.on('huntResult', handleResult);
+
+      // 超时处理
+      setTimeout(() => {
+        socketRef.current?.off('huntResult', handleResult);
+        resolve({ success: false, result: 'empty', message: 'Timeout' });
+      }, 5000);
+    });
+  }, [onBalanceUpdate]);
+
+  // 请求余额
+  const requestBalance = useCallback(() => {
+    socketRef.current?.emit('requestBalance');
+  }, []);
+
+  // 兼容旧接口
   const emitHuntResult = useCallback((
-    x: number, 
-    y: number, 
-    netSize: number, 
+    x: number,
+    y: number,
+    netSize: number,
     result: 'catch' | 'escape' | 'empty',
     memeId?: number
   ) => {
-    socketRef.current?.emit('huntResult', { x, y, netSize, result, memeId });
+    // 旧接口，现在不需要了
+    console.log('emitHuntResult called (deprecated)', { x, y, netSize, result, memeId });
   }, []);
 
-  // 更新余额
-  const updateBalance = useCallback((newBalance: string) => {
-    socketRef.current?.emit('updateBalance', { balance: newBalance });
-  }, []);
-
-  // 发送 Meme 捕获事件
   const emitMemeCaptured = useCallback((memeId: string, reward: number) => {
-    socketRef.current?.emit('memeCaptured', { memeId, reward });
+    // 旧接口，现在由 emitHunt 处理
+    console.log('emitMemeCaptured called (deprecated)', { memeId, reward });
+  }, []);
+
+  const updateBalance = useCallback((newBalance: string) => {
+    // 旧接口
+    console.log('updateBalance called (deprecated)', newBalance);
   }, []);
 
   return {
     socket: socketRef.current,
     isConnected,
+    isLoggedIn,
+    currentUser,
     players,
     remoteActions,
     gameState,
     leaderboard,
     emitNetLaunch,
+    emitHunt,
     emitHuntResult,
     emitMemeCaptured,
     updateBalance,
+    requestBalance,
   };
 }

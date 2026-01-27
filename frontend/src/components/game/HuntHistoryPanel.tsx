@@ -16,11 +16,12 @@ export interface HuntRecord {
 interface HuntHistoryPanelProps {
   history: HuntRecord[];
   className?: string;
+  tokenSymbol?: string;
 }
 
-export default function HuntHistoryPanel({ history, className = '' }: HuntHistoryPanelProps) {
+export default function HuntHistoryPanel({ history, className = '', tokenSymbol = 'TOKEN' }: HuntHistoryPanelProps) {
   const { t } = useTranslation();
-  
+
   // 只显示最近 15 条记录
   const recentHistory = useMemo(() => {
     return history.slice(0, 15);
@@ -33,11 +34,11 @@ export default function HuntHistoryPanel({ history, className = '' }: HuntHistor
 
   if (history.length === 0) {
     return (
-      <div className={`bg-gray-900/80 rounded-xl p-4 flex flex-col h-full ${className}`}>
-        <h3 className="text-lg font-bold text-blue-400 mb-3 flex items-center gap-2">
+      <div className={`flex flex-col h-full bg-black/20 p-4 rounded-xl border border-white/5 ${className}`}>
+        <h3 className="text-secondary font-display uppercase tracking-widest text-xs mb-4 flex items-center gap-2 border-b border-white/5 pb-2">
           <span>📜</span> {t('history.title').replace('📜 ', '')}
         </h3>
-        <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
+        <div className="flex-1 flex items-center justify-center text-text/30 font-mono text-xs italic">
           {t('history.empty')}
         </div>
       </div>
@@ -45,59 +46,59 @@ export default function HuntHistoryPanel({ history, className = '' }: HuntHistor
   }
 
   return (
-    <div className={`bg-gray-900/80 rounded-xl p-4 flex flex-col h-full ${className}`}>
-      <h3 className="text-lg font-bold text-blue-400 mb-3 flex items-center justify-between">
+    <div className={`flex flex-col h-full bg-black/20 p-4 rounded-xl border border-white/5 ${className}`}>
+      <h3 className="text-secondary font-display uppercase tracking-widest text-xs mb-4 flex items-center justify-between border-b border-white/5 pb-2">
         <div className="flex items-center gap-2">
-          <span>📜</span> {t('history.title').replace('📜 ', '')}
+          <span>LOGS</span>
         </div>
-        <span className="text-xs text-gray-400 font-normal">{t('history.last15')}</span>
+        <span className="text-[10px] text-text/30 font-mono">LATEST 15</span>
       </h3>
-      
+
       <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-2">
         {recentHistory.map((record) => (
-          <div 
+          <div
             key={record.id}
             onClick={() => openExplorer(record.txHash)}
             className={`
               relative group cursor-pointer transition-all duration-200
-              p-2.5 rounded-lg border flex items-center justify-between
-              ${record.success 
-                ? 'bg-green-900/20 border-green-500/30 hover:bg-green-900/30 hover:border-green-500/50' 
-                : 'bg-red-900/20 border-red-500/30 hover:bg-red-900/30 hover:border-red-500/50'
+              p-2 rounded border flex items-center justify-between
+              ${record.success
+                ? 'bg-green-500/5 border-green-500/20 hover:bg-green-500/10 hover:border-green-500/40'
+                : 'bg-cta/5 border-cta/20 hover:bg-cta/10 hover:border-cta/40'
               }
             `}
           >
             {/* 左侧：Meme 和 状态 */}
-            <div className="flex items-center gap-2.5">
-              <span className="text-xl filter drop-shadow-md">
+            <div className="flex items-center gap-3">
+              <span className="text-lg filter drop-shadow-md">
                 {record.memeEmoji || '🕸️'}
               </span>
               <div className="flex flex-col">
-                <span className={`text-sm font-bold ${record.success ? 'text-green-400' : 'text-red-400'}`}>
-                  {record.success ? t('history.caught') : t('history.escaped')}
+                <span className={`text-xs font-bold uppercase tracking-wider font-display ${record.success ? 'text-green-400' : 'text-cta'}`}>
+                  {record.success ? 'CAUGHT' : 'ESCAPED'}
                 </span>
-                <span className="text-[10px] text-gray-400">
-                  {new Date(record.timestamp).toLocaleTimeString()}
+                <span className="text-[10px] text-text/30 font-mono">
+                  {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </span>
               </div>
             </div>
-            
+
             {/* 右侧：奖励/消耗 */}
             <div className="flex flex-col items-end">
-              <span className={`font-mono font-medium ${record.success ? 'text-green-400' : 'text-gray-400'}`}>
-                {record.success 
-                  ? `+${record.reward.toFixed(3)}` 
+              <span className={`font-mono text-xs font-bold ${record.success ? 'text-green-400' : 'text-text/40'}`}>
+                {record.success
+                  ? `+${record.reward.toFixed(3)}`
                   : `-${record.netCost.toFixed(3)}`
                 }
               </span>
-              <span className="text-[10px] text-gray-500">{t('common.mon')}</span>
+              <span className="text-[9px] text-text/20 uppercase tracking-wider">{tokenSymbol}</span>
             </div>
 
             {/* Hover 提示 */}
             {record.txHash && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                <span className="text-xs text-white font-medium flex items-center gap-1">
-                  {t('history.viewExplorer')}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/80 rounded backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <span className="text-[10px] text-primary font-mono font-bold uppercase tracking-widest flex items-center gap-1">
+                  VIEW TX ↗
                 </span>
               </div>
             )}
