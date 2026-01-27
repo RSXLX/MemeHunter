@@ -29,6 +29,10 @@ app.use(express.json());
 app.use(cookieParser());
 
 // 健康检查
+app.get('/', (req, res) => {
+  res.send('MemeHunter Server is running normally. <br> <a href="/health">Check Health</a>');
+});
+
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
