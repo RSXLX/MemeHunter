@@ -15,7 +15,7 @@ interface CreateRoomModalProps {
 export default function CreateRoomModal({ isOpen, onClose, onSuccess }: CreateRoomModalProps) {
   const navigate = useNavigate();
   const { publicKey, connected } = useWallet();
-  const { createRoom: createRoomOnChain, loading: chainLoading } = useSolanaProgram();
+  const { createRoom: createRoomOnChain } = useSolanaProgram();
 
   const [roomName, setRoomName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('MEME');
@@ -24,7 +24,6 @@ export default function CreateRoomModal({ isOpen, onClose, onSuccess }: CreateRo
   const [useOnChain, setUseOnChain] = useState(false); // 是否使用链上创建
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<'form' | 'signing' | 'confirming'>('form');
 
   const handleCreateRoom = async () => {
     setIsCreating(true);
@@ -44,7 +43,7 @@ export default function CreateRoomModal({ isOpen, onClose, onSuccess }: CreateRo
           throw new Error('请输入有效的 SPL Token Mint 地址');
         }
 
-        setStep('signing');
+
         
         const chainResult = await createRoomOnChain({
           tokenMint,
@@ -56,7 +55,6 @@ export default function CreateRoomModal({ isOpen, onClose, onSuccess }: CreateRo
         }
 
         roomPda = chainResult.roomPda;
-        setStep('confirming');
         console.log('✅ Chain room created:', roomPda, 'TX:', chainResult.signature);
       }
 
@@ -98,7 +96,6 @@ export default function CreateRoomModal({ isOpen, onClose, onSuccess }: CreateRo
       setError(err.message || '创建房间失败');
     } finally {
       setIsCreating(false);
-      setStep('form');
     }
   };
 
