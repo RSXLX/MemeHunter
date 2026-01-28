@@ -15,8 +15,8 @@ pub mod meme_hunter {
         instructions::initialize::initialize_game(ctx, relayer)
     }
 
-    pub fn create_room(ctx: Context<CreateRoom>, amount: u64) -> Result<()> {
-        instructions::create_room::create_room(ctx, amount)
+    pub fn create_room(ctx: Context<CreateRoom>, amount: u64, room_nonce: u64) -> Result<()> {
+        instructions::create_room::create_room(ctx, amount, room_nonce)
     }
 
     pub fn authorize_session(ctx: Context<AuthorizeSession>, duration_secs: i64) -> Result<()> {

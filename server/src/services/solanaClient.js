@@ -23,10 +23,11 @@ import { connection, relayerAccount } from '../config.js';
 import 'dotenv/config';
 
 // 程序 ID - 从环境变量读取
+// 程序 ID - 从环境变量读取
 const PROGRAM_ID = new PublicKey(
     process.env.MEME_HUNTER_PROGRAM_ID || 
     process.env.CONTRACT_ADDRESS || 
-    'Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS'
+    'BQU16njpJtGeTt6gG8NbXTmPWVAcMjszRPvr3uSvL7Cf'
 );
 
 // 代币精度 (6位小数)
@@ -68,13 +69,16 @@ class SolanaClient {
     }
 
     /**
-     * 派生 Room PDA
+     * 派生 Room PDA (带 nonce 支持同币多房间)
      * @param {PublicKey} creator - 房间创建者
      * @param {PublicKey} tokenMint - 代币 Mint
+     * @param {bigint} roomNonce - 房间唯一标识
      */
-    _deriveRoomPda(creator, tokenMint) {
+    _deriveRoomPda(creator, tokenMint, roomNonce) {
+        const nonceBuffer = Buffer.alloc(8);
+        nonceBuffer.writeBigUInt64LE(roomNonce);
         return PublicKey.findProgramAddressSync(
-            [Buffer.from('room'), creator.toBuffer(), tokenMint.toBuffer()],
+            [Buffer.from('room'), creator.toBuffer(), tokenMint.toBuffer(), nonceBuffer],
             this.programId
         );
     }

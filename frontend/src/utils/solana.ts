@@ -33,11 +33,13 @@ export function deriveGameConfigPda(): [PublicKey, number] {
 }
 
 /**
- * 派生 Room PDA
+ * 派生 Room PDA (带 nonce 支持同币多房间)
  */
-export function deriveRoomPda(creator: PublicKey, tokenMint: PublicKey): [PublicKey, number] {
+export function deriveRoomPda(creator: PublicKey, tokenMint: PublicKey, roomNonce: bigint): [PublicKey, number] {
+    const nonceBuffer = Buffer.alloc(8);
+    nonceBuffer.writeBigUInt64LE(roomNonce);
     return PublicKey.findProgramAddressSync(
-        [Buffer.from('room'), creator.toBuffer(), tokenMint.toBuffer()],
+        [Buffer.from('room'), creator.toBuffer(), tokenMint.toBuffer(), nonceBuffer],
         MEME_HUNTER_PROGRAM_ID
     );
 }

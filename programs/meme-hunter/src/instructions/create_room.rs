@@ -4,6 +4,7 @@ use crate::state::*;
 use crate::instructions::GameConfig;
 
 #[derive(Accounts)]
+#[instruction(amount: u64, room_nonce: u64)]
 pub struct CreateRoom<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
@@ -28,7 +29,7 @@ pub struct CreateRoom<'info> {
         init,
         payer = creator,
         space = Room::LEN,
-        seeds = [b"room", creator.key().as_ref(), token_mint.key().as_ref()],
+        seeds = [b"room", creator.key().as_ref(), token_mint.key().as_ref(), &room_nonce.to_le_bytes()],
         bump
     )]
     pub room: Account<'info, Room>,
@@ -48,7 +49,7 @@ pub struct CreateRoom<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn create_room(ctx: Context<CreateRoom>, amount: u64) -> Result<()> {
+pub fn create_room(ctx: Context<CreateRoom>, amount: u64, room_nonce: u64) -> Result<()> {
     // 1. Transfer tokens from Creator to Room Vault
     let cpi_accounts = Transfer {
         from: ctx.accounts.creator_token_account.to_account_info(),
@@ -68,7 +69,9 @@ pub fn create_room(ctx: Context<CreateRoom>, amount: u64) -> Result<()> {
     room.remaining_amount = amount;
     room.is_active = true;
     room.bump = ctx.bumps.room;
+    room.room_nonce = room_nonce;
 
-    msg!("Room Created! Vault: {}", room.token_vault);
+    msg!("Room Created! Vault: {}, Nonce: {}", room.token_vault, room_nonce);
     Ok(())
 }
+

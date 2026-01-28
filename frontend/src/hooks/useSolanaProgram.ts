@@ -67,9 +67,12 @@ export function useSolanaProgram() {
         try {
             const tokenMint = new PublicKey(params.tokenMint);
             const amount = parseTokenAmount(params.amount);
+            
+            // 生成随机 room_nonce 支持同币多房间
+            const roomNonce = BigInt(Date.now());
 
-            // 派生 PDAs
-            const [roomPda] = deriveRoomPda(publicKey, tokenMint);
+            // 派生 PDAs (带 nonce)
+            const [roomPda] = deriveRoomPda(publicKey, tokenMint, roomNonce);
             const [vaultPda] = deriveVaultPda(roomPda);
             const [gameConfigPda] = deriveGameConfigPda();
 
@@ -109,7 +112,9 @@ export function useSolanaProgram() {
             ]);
             const amountBuffer = Buffer.alloc(8);
             amountBuffer.writeBigUInt64LE(amount);
-            const data = Buffer.concat([discriminator, amountBuffer]);
+            const nonceBuffer = Buffer.alloc(8);
+            nonceBuffer.writeBigUInt64LE(roomNonce);
+            const data = Buffer.concat([discriminator, amountBuffer, nonceBuffer]);
 
             const instruction = new TransactionInstruction({
                 keys: [
@@ -121,7 +126,7 @@ export function useSolanaProgram() {
                     { pubkey: vaultPda, isSigner: false, isWritable: true },
                     { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
                     { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-                    { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false }, // P0 修复
+                    { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
                 ],
                 programId: MEME_HUNTER_PROGRAM_ID,
                 data,
