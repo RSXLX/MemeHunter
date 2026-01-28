@@ -5,7 +5,7 @@ pub mod instructions;
 
 use instructions::*;
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("BQU16njpJtGeTt6gG8NbXTmPWVAcMjszRPvr3uSvL7Cf");
 
 #[program]
 pub mod meme_hunter {

@@ -58,7 +58,10 @@ roomRouter.get('/rooms/my', requireSession, (req, res) => {
  */
 roomRouter.post('/rooms', requireSession, (req, res) => {
     try {
-        const { name, tokenSymbol, maxPlayers, memeCount, netCosts, initialDeposit } = req.body;
+        const { 
+            name, tokenSymbol, maxPlayers, memeCount, netCosts, initialDeposit,
+            tokenMint, roomPda, isOnChain 
+        } = req.body;
 
         const room = roomManager.createRoom(req.user.id, {
             name: name,
@@ -67,6 +70,10 @@ roomRouter.post('/rooms', requireSession, (req, res) => {
             memeCount: memeCount || 8,
             netCosts: netCosts,
             initialDeposit: initialDeposit || 0,
+            // 链上字段
+            tokenMint: tokenMint || null,
+            roomPda: roomPda || null,
+            isOnChain: isOnChain || false,
         });
 
         res.status(201).json({
@@ -259,4 +266,117 @@ roomRouter.post('/rooms/:id/deposit', requireSession, (req, res) => {
     }
 });
 
+/**
+ * POST /api/rooms/:id/settle
+ * 结算房间 - 计算各玩家份额并创建 claims (仅创建者)
+ */
+roomRouter.post('/rooms/:id/settle', requireSession, async (req, res) => {
+    try {
+        const roomId = req.params.id;
+        const room = roomManager.getRoomById(roomId);
+
+        if (!room) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: 'Room not found',
+            });
+        }
+
+        // 仅创建者可以结算
+        if (room.creatorId !== req.user.id) {
+            return res.status(403).json({
+                error: 'Forbidden',
+                message: 'Only room creator can settle',
+            });
+        }
+
+        const { claimManager } = await import('../services/claimManager.js');
+        const result = claimManager.settleRoom(roomId);
+
+        res.json({
+            success: true,
+            ...result,
+        });
+    } catch (error) {
+        console.error('Settle room error:', error);
+        res.status(400).json({
+            error: 'Bad Request',
+            message: error.message,
+        });
+    }
+});
+
+/**
+ * POST /api/rooms/:id/stop
+ * 停止房间 - 退回剩余代币给房主 (仅创建者)
+ */
+roomRouter.post('/rooms/:id/stop', requireSession, async (req, res) => {
+    try {
+        const roomId = req.params.id;
+        const room = roomManager.getRoomById(roomId);
+
+        if (!room) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: 'Room not found',
+            });
+        }
+
+        // 仅创建者可以停止
+        if (room.creatorId !== req.user.id) {
+            return res.status(403).json({
+                error: 'Forbidden',
+                message: 'Only room creator can stop',
+            });
+        }
+
+        // 获取创建者钱包地址
+        const creatorWallet = req.user.walletAddress;
+        if (!creatorWallet) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'Creator wallet not bound',
+            });
+        }
+
+        const { claimManager } = await import('../services/claimManager.js');
+        const result = await claimManager.stopRoom(roomId, creatorWallet);
+
+        res.json({
+            success: true,
+            ...result,
+        });
+    } catch (error) {
+        console.error('Stop room error:', error);
+        res.status(400).json({
+            error: 'Bad Request',
+            message: error.message,
+        });
+    }
+});
+
+/**
+ * GET /api/rooms/:id/claims
+ * 获取房间的所有 claims
+ */
+roomRouter.get('/rooms/:id/claims', optionalSession, async (req, res) => {
+    try {
+        const { claimManager } = await import('../services/claimManager.js');
+        const claims = claimManager.getClaimsByRoom(req.params.id);
+
+        res.json({
+            success: true,
+            claims: claims,
+            count: claims.length,
+        });
+    } catch (error) {
+        console.error('Get claims error:', error);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: error.message,
+        });
+    }
+});
+
 export default roomRouter;
+

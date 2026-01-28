@@ -271,6 +271,27 @@ class UserManager {
             updatedAt: dbUser.updated_at,
         };
     }
+
+    /**
+     * 登出 - 撤销 Session（生成新 Session ID）
+     */
+    logout(userId) {
+        const newSessionId = uuidv4();
+        
+        const updateSession = db.prepare(`
+            UPDATE users SET session_id = ?, updated_at = datetime('now')
+            WHERE id = ?
+        `);
+        
+        const result = updateSession.run(newSessionId, userId);
+        
+        if (result.changes > 0) {
+            console.log(`🚪 User ${userId} logged out`);
+            return true;
+        }
+        
+        return false;
+    }
 }
 
 // 导出单例

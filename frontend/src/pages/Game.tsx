@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, Component, type ReactNode, type ErrorInfo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGuestAuth } from '../hooks/useGuestAuth';
+import { useWalletAuth } from '../hooks/useWalletAuth';
 import { API_BASE_URL, getSessionId } from '../config/api';
 import { useTranslation } from 'react-i18next';
 import GameCanvas from '../components/game/GameCanvas';
@@ -10,6 +11,7 @@ import GameSidebar from '../components/game/GameSidebar';
 import LanguageSwitcher from '../components/common/LanguageSwitcher';
 import QRCodeShare from '../components/room/QRCodeShare';
 import WithdrawModal from '../components/game/WithdrawModal';
+import { BindWalletModal } from '../components/wallet/BindWalletModal';
 
 import type { HuntRecord } from '../components/game/HuntHistoryPanel';
 
@@ -91,8 +93,10 @@ export default function Game() {
 
   // 使用真实数据
   const { balance, isAuthenticated } = useGuestAuth();
+  const { walletAddress, hasWalletBound } = useWalletAuth();
   const [roomInfo, setRoomInfo] = useState<{ poolBalance: number; tokenSymbol: string } | null>(null);
   const [roomLoading, setRoomLoading] = useState(true);
+  const [showBindWalletModal, setShowBindWalletModal] = useState(false);
 
   // 获取房间信息
   useEffect(() => {
@@ -318,6 +322,24 @@ export default function Game() {
                 <LanguageSwitcher />
               </div>
 
+              {/* Wallet Bind Button */}
+              {!hasWalletBound ? (
+                <button
+                  onClick={() => setShowBindWalletModal(true)}
+                  className="px-3 py-1.5 flex items-center gap-2 border border-primary/50 bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
+                >
+                  <span className="text-primary text-sm">🔗</span>
+                  <span className="text-primary font-mono text-xs font-bold max-sm:hidden">Bind Wallet</span>
+                </button>
+              ) : (
+                <div className="px-3 py-1.5 flex items-center gap-2 border border-green-500/30 bg-green-500/10 rounded-lg">
+                  <span className="text-green-400 text-sm">✅</span>
+                  <span className="text-green-400 font-mono text-xs max-sm:hidden">
+                    {walletAddress?.slice(0, 4)}...{walletAddress?.slice(-4)}
+                  </span>
+                </div>
+              )}
+
               {/* Session Status */}
               {hasSessionKey && (
                 <div className="px-3 py-1.5 flex items-center gap-2 border border-green-500/30 bg-green-500/10 rounded full">
@@ -480,6 +502,13 @@ export default function Game() {
           onClose={() => setShowWithdrawModal(false)}
           balance={balance}
           onWithdrawSuccess={() => {}}
+        />
+
+        {/* Bind Wallet Modal */}
+        <BindWalletModal
+          isOpen={showBindWalletModal}
+          onClose={() => setShowBindWalletModal(false)}
+          onBindSuccess={() => setShowBindWalletModal(false)}
         />
       </div>
     </ErrorBoundary>

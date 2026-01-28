@@ -12,8 +12,10 @@ interface Room {
     poolBalance: number;
     creatorDeposit: number;
     maxPlayers: number;
-    status: 'active' | 'paused' | 'ended';
+    status: 'active' | 'paused' | 'ended' | 'settled' | 'stopped';
     createdAt: string;
+    isOnChain?: boolean;
+    roomPda?: string;
 }
 
 export default function MyRooms() {
@@ -118,6 +120,66 @@ export default function MyRooms() {
         }
     };
 
+    // 结算房间 - 按积分分发代币
+    const settleRoom = async (roomId: string) => {
+        if (!confirm('确定要结算这个房间吗？将按积分比例生成分发记录。')) return;
+
+        const sessionId = getSessionId();
+        if (!sessionId) return;
+
+        setActionLoading(roomId);
+        try {
+            const res = await fetch(`${API_BASE_URL}/rooms/${roomId}/settle`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Session-Id': sessionId,
+                },
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`结算成功！共生成 ${data.claims?.length || 0} 条分发记录`);
+                fetchMyRooms();
+            } else {
+                alert(data.message || '结算失败');
+            }
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    // 停止房间 - 退回剩余代币
+    const stopRoom = async (roomId: string) => {
+        if (!confirm('确定要停止这个房间吗？剩余代币将退回您的钱包。')) return;
+
+        const sessionId = getSessionId();
+        if (!sessionId) return;
+
+        setActionLoading(roomId);
+        try {
+            const res = await fetch(`${API_BASE_URL}/rooms/${roomId}/stop`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Session-Id': sessionId,
+                },
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`房间已停止！退回金额: ${data.refundAmount || 0}`);
+                fetchMyRooms();
+            } else {
+                alert(data.message || '停止失败');
+            }
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#0f0f23] via-[#1a1a2e] to-[#16213e] p-6">
             <div className="max-w-6xl mx-auto">
@@ -183,9 +245,14 @@ export default function MyRooms() {
                                             <span className={`px-2 py-0.5 rounded text-xs font-bold ${
                                                 room.status === 'active' ? 'bg-green-500/20 text-green-400' :
                                                 room.status === 'paused' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                room.status === 'settled' ? 'bg-blue-500/20 text-blue-400' :
+                                                room.status === 'stopped' ? 'bg-purple-500/20 text-purple-400' :
                                                 'bg-red-500/20 text-red-400'
                                             }`}>
-                                                {room.status === 'active' ? '进行中' : room.status === 'paused' ? '已暂停' : '已结束'}
+                                                {room.status === 'active' ? '进行中' : 
+                                                 room.status === 'paused' ? '已暂停' : 
+                                                 room.status === 'settled' ? '已结算' :
+                                                 room.status === 'stopped' ? '已停止' : '已结束'}
                                             </span>
                                         </div>
                                         <p className="text-text/50 text-sm font-mono">ID: {room.id}</p>
@@ -246,18 +313,23 @@ export default function MyRooms() {
                                                 恢复
                                             </button>
                                         )}
-                                        {room.status !== 'ended' && (
-                                            <button
-                                                onClick={() => {
-                                                    if (confirm('确定要结束这个房间吗？此操作不可撤销。')) {
-                                                        updateRoomStatus(room.id, 'ended');
-                                                    }
-                                                }}
-                                                disabled={actionLoading === room.id}
-                                                className="px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-lg text-sm text-red-400 hover:bg-red-500/30 transition-all disabled:opacity-50"
-                                            >
-                                                结束
-                                            </button>
+                                        {room.status !== 'ended' && room.status !== 'settled' && room.status !== 'stopped' && (
+                                            <>
+                                                <button
+                                                    onClick={() => settleRoom(room.id)}
+                                                    disabled={actionLoading === room.id}
+                                                    className="px-4 py-2 bg-blue-500/20 border border-blue-500/30 rounded-lg text-sm text-blue-400 hover:bg-blue-500/30 transition-all disabled:opacity-50"
+                                                >
+                                                    📊 结算分发
+                                                </button>
+                                                <button
+                                                    onClick={() => stopRoom(room.id)}
+                                                    disabled={actionLoading === room.id}
+                                                    className="px-4 py-2 bg-purple-500/20 border border-purple-500/30 rounded-lg text-sm text-purple-400 hover:bg-purple-500/30 transition-all disabled:opacity-50"
+                                                >
+                                                    🔙 停止退回
+                                                </button>
+                                            </>
                                         )}
                                     </div>
                                 </div>

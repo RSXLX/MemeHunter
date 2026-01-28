@@ -3,9 +3,12 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MEME_CONFIG } from '../utils/constants';
 import { useGuestAuth } from '../hooks/useGuestAuth';
+import { useWalletAuth } from '../hooks/useWalletAuth';
 import LanguageSwitcher from '../components/common/LanguageSwitcher';
 import RoomList from '../components/room/RoomList';
 import CreateRoomModal from '../components/game/CreateRoomModal';
+import { WalletLoginButton } from '../components/wallet/WalletLoginButton';
+import { BindWalletModal } from '../components/wallet/BindWalletModal';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -14,9 +17,13 @@ export default function Home() {
   // 游客认证系统
   const { user, isLoading, balance, isAuthenticated } = useGuestAuth();
 
+  // 钱包认证
+  const { walletAddress, hasWalletBound } = useWalletAuth();
+
   // UI 状态
   const [showCreateRoomModal, setShowCreateRoomModal] = useState(false);
   const [showRoomList, setShowRoomList] = useState(false);
+  const [showBindWalletModal, setShowBindWalletModal] = useState(false);
 
   const handleEnterGame = () => {
     navigate('/game');
@@ -50,8 +57,11 @@ export default function Home() {
       {/* Animated Grid Background */}
       <div className="cyber-grid opacity-30"></div>
 
-      {/* Language Switcher */}
-      <div className="absolute top-4 right-4 z-40">
+      {/* Wallet Login & Language Switcher */}
+      <div className="absolute top-4 right-4 z-40 flex items-center gap-4">
+        <WalletLoginButton 
+          size="sm" 
+        />
         <LanguageSwitcher />
       </div>
 
@@ -104,11 +114,15 @@ export default function Home() {
           {isAuthenticated && user && (
             <div className="card w-full flex items-center justify-between border-secondary/30 bg-background/80">
               <div className="flex items-center gap-4">
-                <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e]"></div>
+                <div className={`w-3 h-3 rounded-full ${hasWalletBound ? 'bg-primary' : 'bg-green-500'} animate-pulse shadow-[0_0_10px_${hasWalletBound ? 'var(--color-primary)' : '#22c55e'}]`}></div>
                 <div className="flex flex-col">
-                  <span className="text-xs text-secondary uppercase tracking-wider font-display">Guest</span>
+                  <span className="text-xs text-secondary uppercase tracking-wider font-display">
+                    {hasWalletBound ? 'Wallet' : 'Guest'}
+                  </span>
                   <span className="font-mono text-text/90 text-sm">
-                    {user.nickname}
+                    {hasWalletBound && walletAddress 
+                      ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`
+                      : user.nickname}
                   </span>
                 </div>
               </div>
@@ -160,13 +174,15 @@ export default function Home() {
               🎮 My Rooms
             </button>
 
-            {/* Withdraw Button */}
+            {/* Withdraw Button - 改为绑定钱包/领取空投 */}
             {balance > 0 && (
               <button
-                onClick={handleWithdraw}
-                className="w-full py-3 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg font-display uppercase tracking-widest text-sm hover:bg-green-500/30 transition-colors"
+                onClick={() => hasWalletBound ? handleWithdraw() : setShowBindWalletModal(true)}
+                className={`w-full py-3 ${hasWalletBound 
+                  ? 'bg-green-500/20 border-green-500/50 text-green-400' 
+                  : 'bg-primary/20 border-primary/50 text-primary'} border rounded-lg font-display uppercase tracking-widest text-sm hover:opacity-80 transition-opacity`}
               >
-                💰 Withdraw Tokens
+                {hasWalletBound ? '💰 Claim Airdrop' : '🔗 Bind Wallet for Airdrop'}
               </button>
             )}
           </div>
@@ -194,6 +210,13 @@ export default function Home() {
       <CreateRoomModal
         isOpen={showCreateRoomModal}
         onClose={() => setShowCreateRoomModal(false)}
+      />
+
+      {/* Bind Wallet Modal */}
+      <BindWalletModal
+        isOpen={showBindWalletModal}
+        onClose={() => setShowBindWalletModal(false)}
+        onBindSuccess={() => setShowBindWalletModal(false)}
       />
     </div>
   );

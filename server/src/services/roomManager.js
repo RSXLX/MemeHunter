@@ -21,8 +21,8 @@ const CANVAS_HEIGHT = 1200;
 
 const stmts = {
     insertRoom: db.prepare(`
-    INSERT INTO rooms (id, creator_id, name, token_symbol, pool_balance, max_players, meme_count, net_costs, status, creator_deposit)
-    VALUES (@id, @creatorId, @name, @tokenSymbol, @poolBalance, @maxPlayers, @memeCount, @netCosts, @status, @creatorDeposit)
+    INSERT INTO rooms (id, creator_id, name, token_symbol, pool_balance, max_players, meme_count, net_costs, status, creator_deposit, token_mint, room_pda, vault_pda)
+    VALUES (@id, @creatorId, @name, @tokenSymbol, @poolBalance, @maxPlayers, @memeCount, @netCosts, @status, @creatorDeposit, @tokenMint, @roomPda, @vaultPda)
   `),
 
     getRoomById: db.prepare(`
@@ -90,6 +90,10 @@ class RoomManager {
             memeCount: options.memeCount || 8,
             netCosts: JSON.stringify(options.netCosts || [0.005, 0.01, 0.02]),
             status: 'active',
+            // 链上字段
+            tokenMint: options.tokenMint || null,
+            roomPda: options.roomPda || null,
+            vaultPda: options.vaultPda || null,
         };
 
         stmts.insertRoom.run(room);
@@ -371,6 +375,11 @@ class RoomManager {
             netCosts: JSON.parse(dbRoom.net_costs),
             status: dbRoom.status,
             createdAt: dbRoom.created_at,
+            // 链上字段
+            tokenMint: dbRoom.token_mint || null,
+            roomPda: dbRoom.room_pda || null,
+            vaultPda: dbRoom.vault_pda || null,
+            isOnChain: !!(dbRoom.room_pda),
         };
     }
 
