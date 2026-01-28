@@ -3,6 +3,7 @@
  * 用于游客绑定钱包以获得空投资格
  */
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
@@ -20,6 +21,7 @@ export function BindWalletModal({
     onBindSuccess,
 }: BindWalletModalProps) {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { connected, publicKey } = useWallet();
     const { setVisible: setWalletModalVisible } = useWalletModal();
     const { bindWalletToAccount, isLoading, error } = useWalletAuth();
@@ -57,8 +59,8 @@ export function BindWalletModal({
             return (
                 <div className="text-center py-8">
                     <div className="text-6xl mb-4">🎉</div>
-                    <h3 className="text-xl font-bold text-green-400 mb-2">Wallet Bound!</h3>
-                    <p className="text-text/60">You are now eligible for airdrops</p>
+                    <h3 className="text-xl font-bold text-green-400 mb-2">{t('bindWallet.successTitle')}</h3>
+                    <p className="text-text/60">{t('bindWallet.successDesc')}</p>
                 </div>
             );
         }
@@ -68,13 +70,13 @@ export function BindWalletModal({
             return (
                 <div className="text-center py-8">
                     <div className="text-6xl mb-4">❌</div>
-                    <h3 className="text-xl font-bold text-red-400 mb-2">Bind Failed</h3>
+                    <h3 className="text-xl font-bold text-red-400 mb-2">{t('bindWallet.failedTitle')}</h3>
                     <p className="text-text/60 mb-4">{bindError || 'Unknown error'}</p>
                     <button
                         onClick={() => setStep('intro')}
                         className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
                     >
-                        Try Again
+                        {t('bindWallet.tryAgain')}
                     </button>
                 </div>
             );
@@ -85,8 +87,8 @@ export function BindWalletModal({
             return (
                 <div className="text-center py-8">
                     <div className="text-6xl mb-4 animate-pulse">✍️</div>
-                    <h3 className="text-xl font-bold text-primary mb-2">Signing...</h3>
-                    <p className="text-text/60">Please confirm in your wallet</p>
+                    <h3 className="text-xl font-bold text-primary mb-2">{t('bindWallet.signingTitle')}</h3>
+                    <p className="text-text/60">{t('bindWallet.signingDesc')}</p>
                 </div>
             );
         }
@@ -97,7 +99,7 @@ export function BindWalletModal({
                 <div className="text-center py-4">
                     <div className="mb-6">
                         <div className="text-4xl mb-2">🔗</div>
-                        <p className="text-sm text-text/60 mb-1">Connected Wallet</p>
+                        <p className="text-sm text-text/60 mb-1">{t('bindWallet.connectedWallet')}</p>
                         <p className="font-mono text-sm text-primary">
                             {publicKey.toBase58().slice(0, 8)}...{publicKey.toBase58().slice(-8)}
                         </p>
@@ -105,8 +107,7 @@ export function BindWalletModal({
 
                     <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-6">
                         <p className="text-sm text-yellow-200">
-                            ⚠️ This wallet will be permanently bound to your account.
-                            Make sure this is the wallet you want to use for airdrops.
+                            {t('bindWallet.warning')}
                         </p>
                     </div>
 
@@ -116,7 +117,7 @@ export function BindWalletModal({
                             text-white font-bold rounded-lg shadow-lg
                             hover:shadow-xl hover:scale-105 transition-all"
                     >
-                        Sign to Bind Wallet
+                        {t('bindWallet.signBtn')}
                     </button>
                 </div>
             );
@@ -126,24 +127,23 @@ export function BindWalletModal({
         return (
             <div className="text-center py-4">
                 <div className="text-6xl mb-4">🎁</div>
-                <h3 className="text-xl font-bold text-text mb-2">Bind Wallet for Airdrops</h3>
+                <h3 className="text-xl font-bold text-text mb-2">{t('bindWallet.introTitle')}</h3>
                 <p className="text-text/60 mb-6">
-                    Connect and bind your Solana wallet to become eligible for token airdrops.
-                    Your earned points will be converted to tokens!
+                    {t('bindWallet.introDesc')}
                 </p>
 
                 <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
                         <span className="text-2xl">1️⃣</span>
-                        <span className="text-sm text-left">Connect your Solana wallet</span>
+                        <span className="text-sm text-left">{t('bindWallet.step1')}</span>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
                         <span className="text-2xl">2️⃣</span>
-                        <span className="text-sm text-left">Sign a message to verify ownership</span>
+                        <span className="text-sm text-left">{t('bindWallet.step2')}</span>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
                         <span className="text-2xl">3️⃣</span>
-                        <span className="text-sm text-left">Receive airdrops to your wallet</span>
+                        <span className="text-sm text-left">{t('bindWallet.step3')}</span>
                     </div>
                 </div>
 
@@ -153,7 +153,7 @@ export function BindWalletModal({
                         text-white font-bold rounded-lg shadow-lg
                         hover:shadow-xl hover:scale-105 transition-all"
                 >
-                    Connect Wallet
+                    {t('bindWallet.connectBtn')}
                 </button>
             </div>
         );
@@ -171,7 +171,7 @@ export function BindWalletModal({
             <div className="relative w-full max-w-md mx-4 bg-background border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-                    <h2 className="text-lg font-bold font-display">Bind Wallet</h2>
+                    <h2 className="text-lg font-bold font-display">{t('bindWallet.title')}</h2>
                     <button
                         onClick={onClose}
                         className="w-8 h-8 flex items-center justify-center rounded-lg

@@ -3,6 +3,7 @@
  * 支持连接钱包和签名登录流程
  */
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useWalletAuth } from '../../hooks/useWalletAuth';
@@ -18,6 +19,7 @@ export function WalletLoginButton({
     className = '',
     size = 'md',
 }: WalletLoginButtonProps) {
+    const { t } = useTranslation();
     const { connected, publicKey } = useWallet();
     const { setVisible } = useWalletModal();
     const { loginWithWallet, isLoading, error, walletUser } = useWalletAuth();
@@ -81,20 +83,20 @@ export function WalletLoginButton({
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                         />
                     </svg>
-                    Signing...
+                    {t('walletLogin.signing')}
                 </span>
             );
         }
 
         if (connected && step === 'connecting') {
-            return 'Sign to Login';
+            return t('walletLogin.signToLogin');
         }
 
         if (connected) {
             return (
                 <span className="flex items-center gap-2">
                     <span>🔓</span>
-                    Sign to Login
+                    {t('walletLogin.signToLogin')}
                 </span>
             );
         }
@@ -102,7 +104,7 @@ export function WalletLoginButton({
         return (
             <span className="flex items-center gap-2">
                 <span>🔗</span>
-                Connect Wallet
+                {t('walletLogin.connectWallet')}
             </span>
         );
     };
@@ -136,7 +138,7 @@ export function WalletLoginButton({
 
             {connected && !walletUser && step === 'idle' && (
                 <p className="mt-2 text-xs text-text/60 text-center">
-                    Click to sign and login
+                    {t('walletLogin.clickToSign')}
                 </p>
             )}
         </div>

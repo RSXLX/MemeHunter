@@ -79,6 +79,14 @@ body {
 
 /* Design System Component Specs */
 
+/* ============================================
+   CYBERPUNK STYLES (Retro-Futurism)
+   Colors: #7C3AED (Primary), #F43F5E (CTA), #0F0F23 (BG)
+   Fonts: Russo One + Chakra Petch
+   ============================================ */
+
+/* Design System Component Specs - From MASTER.md & Custom */
+
 /* Buttons */
 .btn-primary {
   background: var(--color-cta);
@@ -114,22 +122,20 @@ body {
   transform: translateY(-1px);
 }
 
-/* Cards */
+/* Cards - Enhanced Cyber Style */
 .card {
-  background: rgba(15, 15, 35, 0.6);
-  /* Slightly transparent for backdrop filter */
-  backdrop-filter: blur(12px);
-  border-radius: 12px;
-  padding: 24px;
-  border: 1px solid rgba(167, 139, 250, 0.1);
-  /* Secondary color hint */
-  box-shadow: var(--shadow-md);
-  transition: all 200ms ease;
+    background: rgba(15, 15, 35, 0.6);
+    backdrop-filter: blur(12px);
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid rgba(167, 139, 250, 0.1);
+    box-shadow: var(--shadow-md);
+    transition: all 200ms ease;
 }
 
 .card:hover {
-  box-shadow: var(--shadow-lg);
-  border-color: rgba(167, 139, 250, 0.3);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(167, 139, 250, 0.3);
 }
 
 /* Inputs */
@@ -150,114 +156,6 @@ body {
 }
 
 /* Typography Utils */
-.font-display {
-  font-family: 'Orbitron', sans-serif;
-}
-
-.font-body {
-  font-family: 'Exo 2', sans-serif;
-}
-
-
-/* Meme 漂浮动画 */
-@keyframes float-1 {
-
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-
-  25% {
-    transform: translate(10px, -15px) rotate(5deg);
-  }
-
-  50% {
-    transform: translate(-5px, -25px) rotate(-3deg);
-  }
-
-  75% {
-    transform: translate(-15px, -10px) rotate(3deg);
-  }
-}
-
-@keyframes float-2 {
-
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-
-  33% {
-    transform: translate(-20px, -10px) rotate(-5deg);
-  }
-
-  66% {
-    transform: translate(15px, -20px) rotate(5deg);
-  }
-}
-
-@keyframes float-3 {
-
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-
-  50% {
-    transform: translate(10px, -30px);
-  }
-}
-
-@keyframes pulse-glow {
-
-  0%,
-  100% {
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
-  }
-
-  50% {
-    box-shadow: 0 0 40px rgba(139, 92, 246, 0.8);
-  }
-}
-
-.meme-float-1 {
-  animation: float-1 4s ease-in-out infinite;
-}
-
-.meme-float-2 {
-  animation: float-2 5s ease-in-out infinite;
-  animation-delay: 0.5s;
-}
-
-.meme-float-3 {
-  animation: float-3 3.5s ease-in-out infinite;
-  animation-delay: 1s;
-}
-
-.meme-float-4 {
-  animation: float-1 4.5s ease-in-out infinite;
-  animation-delay: 1.5s;
-}
-
-.meme-float-5 {
-  animation: float-2 3s ease-in-out infinite;
-  animation-delay: 2s;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-/* ============================================
-   CYBERPUNK STYLES (Retro-Futurism)
-   Colors: #7C3AED (Primary), #F43F5E (CTA), #0F0F23 (BG)
-   Fonts: Russo One + Chakra Petch
-   ============================================ */
-
-/* Import Google Fonts - Already imported at top */
-/* @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Russo+One&display=swap'); */
-
-/* Custom Font Classes */
 .font-russo {
   font-family: 'Russo One', sans-serif;
 }
@@ -266,11 +164,19 @@ body {
   font-family: 'Chakra Petch', sans-serif;
 }
 
+.font-display {
+  font-family: 'Orbitron', sans-serif;
+}
+
+.font-body {
+  font-family: 'Exo 2', sans-serif;
+}
+
 /* Cyberpunk Container */
 .cyberpunk-container {
-  font-family: 'Chakra Petch', sans-serif;
+  font-family: 'Exo 2', sans-serif;
   position: relative;
-  background: #0F0F23;
+  background: var(--color-background);
 }
 
 /* CRT Scanlines Overlay */
@@ -291,13 +197,8 @@ body {
 }
 
 @keyframes scanlines {
-  0% {
-    transform: translateY(0);
-  }
-
-  100% {
-    transform: translateY(100%);
-  }
+  0% { transform: translateY(0); }
+  100% { transform: translateY(100%); }
 }
 
 /* Animated Cyber Grid Background */
@@ -317,27 +218,20 @@ body {
 }
 
 @keyframes grid-move {
-  0% {
-    transform: translateY(0);
-  }
-
-  100% {
-    transform: translateY(50px);
-  }
+  0% { transform: translateY(0); }
+  100% { transform: translateY(50px); }
 }
 
 /* Neon Text Effect */
 .neon-text {
   text-shadow:
     0 0 10px rgba(124, 58, 237, 0.8),
-    0 0 20px rgba(124, 58, 237, 0.6),
-    0 0 30px rgba(124, 58, 237, 0.4),
-    0 0 40px rgba(124, 58, 237, 0.2);
+    0 0 20px rgba(124, 58, 237, 0.6);
 }
 
 /* Cyber Title with Glitch Effect */
 .cyber-title {
-  font-family: 'Russo One', sans-serif;
+  font-family: 'Orbitron', sans-serif;
   text-transform: uppercase;
   background: linear-gradient(90deg, #7C3AED 0%, #F43F5E 50%, #A78BFA 100%);
   background-clip: text;
@@ -384,65 +278,25 @@ body {
 }
 
 @keyframes glitch-anim-1 {
-
-  0%,
-  100% {
-    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-  }
-
-  10% {
-    clip-path: polygon(0 10%, 100% 10%, 100% 60%, 0 60%);
-  }
-
-  20% {
-    clip-path: polygon(0 30%, 100% 30%, 100% 55%, 0 55%);
-  }
-
-  30% {
-    clip-path: polygon(0 20%, 100% 20%, 100% 70%, 0 70%);
-  }
+  0%, 100% { clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%); }
+  10% { clip-path: polygon(0 10%, 100% 10%, 100% 60%, 0 60%); }
+  20% { clip-path: polygon(0 30%, 100% 30%, 100% 55%, 0 55%); }
+  30% { clip-path: polygon(0 20%, 100% 20%, 100% 70%, 0 70%); }
 }
 
 @keyframes glitch-anim-2 {
-
-  0%,
-  100% {
-    clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
-  }
-
-  15% {
-    clip-path: polygon(0 70%, 100% 70%, 100% 90%, 0 90%);
-  }
-
-  30% {
-    clip-path: polygon(0 50%, 100% 50%, 100% 85%, 0 85%);
-  }
+  0%, 100% { clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%); }
+  15% { clip-path: polygon(0 70%, 100% 70%, 100% 90%, 0 90%); }
+  30% { clip-path: polygon(0 50%, 100% 50%, 100% 85%, 0 85%); }
 }
 
 @keyframes glitch-skew {
-  0% {
-    transform: skew(0deg);
-  }
-
-  10% {
-    transform: skew(2deg);
-  }
-
-  20% {
-    transform: skew(-2deg);
-  }
-
-  30% {
-    transform: skew(1deg);
-  }
-
-  40% {
-    transform: skew(-1deg);
-  }
-
-  50% {
-    transform: skew(0deg);
-  }
+  0% { transform: skew(0deg); }
+  10% { transform: skew(2deg); }
+  20% { transform: skew(-2deg); }
+  30% { transform: skew(1deg); }
+  40% { transform: skew(-1deg); }
+  50% { transform: skew(0deg); }
 }
 
 /* Neon Logo */
@@ -452,15 +306,8 @@ body {
 }
 
 @keyframes logo-pulse {
-
-  0%,
-  100% {
-    filter: drop-shadow(0 0 20px rgba(244, 63, 94, 0.7)) drop-shadow(0 0 40px rgba(124, 58, 237, 0.5));
-  }
-
-  50% {
-    filter: drop-shadow(0 0 30px rgba(244, 63, 94, 0.9)) drop-shadow(0 0 60px rgba(124, 58, 237, 0.7));
-  }
+  0%, 100% { filter: drop-shadow(0 0 20px rgba(244, 63, 94, 0.7)) drop-shadow(0 0 40px rgba(124, 58, 237, 0.5)); }
+  50% { filter: drop-shadow(0 0 30px rgba(244, 63, 94, 0.9)) drop-shadow(0 0 60px rgba(124, 58, 237, 0.7)); }
 }
 
 /* Neon Emoji */
@@ -522,15 +369,12 @@ body {
 
 /* Float Animation */
 @keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
 
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-
-  50% {
-    transform: translateY(-20px);
-  }
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }
 
 /* Fade In Animation */

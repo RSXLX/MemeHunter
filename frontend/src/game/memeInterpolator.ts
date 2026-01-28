@@ -96,17 +96,34 @@ export class MemeInterpolator {
   }
 
   /**
-   * 每帧更新 - 简化版：直接返回目标位置（不做插值）
-   * 因为客户端物理引擎已经以 60fps 平滑更新，无需二次插值
+   * 每帧更新 - 使用线性插值 + 速度预测实现平滑移动
+   * 后端 10fps -> 前端 60fps 平滑
    */
   update(): InterpolatedMeme[] {
+    const now = performance.now();
     const result: InterpolatedMeme[] = [];
+    
+    // 服务端更新间隔 (100ms = 10fps)
+    const SERVER_TICK = 100;
 
     for (const meme of this.memes.values()) {
-      // 直接使用目标位置作为渲染位置
-      meme.renderX = meme.targetX;
-      meme.renderY = meme.targetY;
-      meme.interpolationProgress = 1;
+      const elapsed = now - meme.lastUpdateTime;
+      
+      // 计算插值进度 (0 到 1+，允许超过 1 进行外推)
+      const progress = Math.min(elapsed / SERVER_TICK, 2.0);
+      
+      if (progress <= 1.0) {
+        // 线性插值
+        meme.renderX = meme.prevX + (meme.targetX - meme.prevX) * progress;
+        meme.renderY = meme.prevY + (meme.targetY - meme.prevY) * progress;
+      } else {
+        // 外推：使用速度预测
+        const extraTime = (elapsed - SERVER_TICK) / 1000;
+        meme.renderX = meme.targetX + meme.vx * extraTime;
+        meme.renderY = meme.targetY + meme.vy * extraTime;
+      }
+      
+      meme.interpolationProgress = progress;
       result.push(meme);
     }
 

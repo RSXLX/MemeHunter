@@ -46,6 +46,29 @@ export function useWalletAuth() {
     // 获取钱包地址
     const walletAddress = publicKey?.toBase58() || null;
 
+    // 页面加载时恢复 session
+    useEffect(() => {
+        const restoreSession = async () => {
+            const sessionId = getSessionId();
+            if (!sessionId) return;
+
+            try {
+                // 尝试从 API 获取用户信息
+                const response = await apiFetch<{ success: boolean; user: User }>('/user/profile');
+                if (response.success && response.user) {
+                    setWalletUser(response.user);
+                    console.log(`🔓 Session restored: ${response.user.nickname}`);
+                }
+            } catch (err) {
+                // Session 无效，清除
+                console.log('Session expired, clearing...');
+                clearSession();
+            }
+        };
+
+        restoreSession();
+    }, []);
+
     /**
      * 钱包登录流程
      */

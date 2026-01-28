@@ -133,18 +133,16 @@ export function onHuntFail(playerId) {
 
 /**
  * 检查玩家是否可以发射（冷却完成）
+ * 注意：已禁用冷却机制，无限制捕捉
  * @param {string} playerId - 玩家 ID
  * @returns {Object} { canHunt, remainingMs }
  */
 export function canHunt(playerId) {
+    // 禁用冷却机制 - 始终返回可捕捉
     const state = getPlayerState(playerId);
-    const now = Date.now();
-    const elapsed = now - state.lastHuntTime;
-    const remainingMs = Math.max(0, state.cooldownMs - elapsed);
-
     return {
-        canHunt: remainingMs === 0,
-        remainingMs,
+        canHunt: true,
+        remainingMs: 0,
         cooldownMs: state.cooldownMs,
     };
 }

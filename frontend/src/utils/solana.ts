@@ -4,10 +4,10 @@
 import { PublicKey } from '@solana/web3.js';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
 
-// 程序 ID
+// 程序 ID - 必须与部署的合约一致
 export const MEME_HUNTER_PROGRAM_ID = new PublicKey(
     import.meta.env.VITE_MEME_HUNTER_PROGRAM_ID || 
-    'Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS'
+    'BQU16njpJtGeTt6gG8NbXTmPWVAcMjszRPvr3uSvL7Cf'  // 实际部署的程序 ID
 );
 
 // 网络配置

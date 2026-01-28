@@ -1,17 +1,5 @@
 import { useTranslation } from 'react-i18next';
-// Mock useWallet and useGameSocket for UI refactor task if real hooks are not available or needed for style verification
-// import { useWallet } from '@solana/wallet-adapter-react';
-// import { useGameSocket } from '../../hooks/useGameSocket';
-// Using mock data for styling purposes as hooks might fail without context
-const useWallet = () => ({ publicKey: { toBase58: () => 'MockAddress123' } });
-const useGameSocket = () => ({
-  isConnected: true,
-  players: [
-    { address: 'MockAddress123', nickname: 'You', color: '#7C3AED', isHunting: false },
-    { address: 'ADDR2', nickname: 'Hunter_X', color: '#F43F5E', isHunting: true },
-    { address: 'ADDR3', nickname: 'CoinMaster', color: '#3b82f6', isHunting: false }
-  ]
-});
+import { useSocketContext } from '../../contexts/SocketContext';
 
 // 网风格颜色 - Maps to design system if possible
 const NET_COLORS = [
@@ -25,9 +13,24 @@ const NET_COLORS = [
 
 export default function PlayerBar() {
   const { t } = useTranslation();
-  const { publicKey } = useWallet();
-  const currentAddress = publicKey?.toBase58();
-  const { players, isConnected } = useGameSocket();
+  const { isConnected, currentUser, leaderboard, gameState } = useSocketContext();
+  
+  // 优先使用 gameState.playerCount，其次是 leaderboard 长度
+  const onlineCount = gameState?.playerCount ?? leaderboard.length;
+  
+  // 从 leaderboard 获取玩家列表，或使用当前用户
+  const players = leaderboard.length > 0 
+    ? leaderboard.slice(0, 5).map((entry, index) => ({
+        id: `player_${index}`,
+        nickname: entry.nickname || `Player ${index + 1}`,
+        color: NET_COLORS[index % NET_COLORS.length],
+        isHunting: false,
+      }))
+    : currentUser 
+      ? [{ id: currentUser.id, nickname: currentUser.nickname, color: NET_COLORS[0], isHunting: false }]
+      : [];
+  
+  const currentNickname = currentUser?.nickname;
 
   return (
     <div className="flex items-center justify-center gap-3 py-3 px-4 text-sm bg-black/20 rounded-xl border border-white/5 backdrop-blur-sm">
@@ -40,12 +43,12 @@ export default function PlayerBar() {
           <span className="text-text/40 italic font-mono text-xs">{t('playerBar.waiting')}...</span>
         ) : (
           players.map((player) => {
-            const isMe = player.address?.toLowerCase() === currentAddress?.toLowerCase();
+            const isMe = player.nickname === currentNickname;
             const color = player.color || NET_COLORS[0];
 
             return (
               <div
-                key={player.address}
+                key={player.id}
                 className={`flex items-center gap-2 px-3 py-1 rounded-full transition-all border ${isMe
                   ? 'bg-primary/20 border-primary/50 shadow-[0_0_10px_rgba(124,58,237,0.2)]'
                   : 'bg-white/5 border-white/5 hover:border-white/20'
@@ -62,7 +65,7 @@ export default function PlayerBar() {
 
                 {/* 玩家昵称 */}
                 <span className={`font-mono text-xs tracking-wide ${isMe ? 'text-primary font-bold' : 'text-text/70'}`}>
-                  {isMe ? t('playerBar.you') : player.nickname || `#${player.address?.slice(0, 4)}`}
+                  {isMe ? t('playerBar.you') : player.nickname}
                 </span>
 
                 {/* 狩猎状态 */}
@@ -77,8 +80,9 @@ export default function PlayerBar() {
 
       {/* 在线人数 */}
       <div className="text-text/30 font-display text-xs ml-2 tracking-widest">
-        ONLINE: <span className="text-text/70">{players.length}</span>
+        ONLINE: <span className="text-text/70">{onlineCount}</span>
       </div>
     </div>
   );
 }
+

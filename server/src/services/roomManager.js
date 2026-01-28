@@ -5,14 +5,14 @@ import { v4 as uuidv4 } from 'uuid';
 import db from '../database/db.js';
 import QRCode from 'qrcode';
 
-// Meme 配置
+// Meme 配置 - 速度已调高以实现流畅移动
 const MEME_CONFIGS = [
-    { id: 1, emoji: '🐸', name: 'Pepe', speed: 2, reward: 10 },
-    { id: 2, emoji: '🐶', name: 'Doge', speed: 2, reward: 10 },
-    { id: 3, emoji: '🦊', name: 'Fox', speed: 4, reward: 25 },
-    { id: 4, emoji: '💎', name: 'Diamond', speed: 6, reward: 50 },
-    { id: 5, emoji: '🚀', name: 'Rocket', speed: 8, reward: 100 },
-    { id: 6, emoji: '🎁', name: 'Airdrop', speed: 10, reward: 200 },
+    { id: 1, emoji: '🐸', name: 'Pepe', speed: 6, reward: 10 },
+    { id: 2, emoji: '🐶', name: 'Doge', speed: 6, reward: 10 },
+    { id: 3, emoji: '🦊', name: 'Fox', speed: 10, reward: 25 },
+    { id: 4, emoji: '💎', name: 'Diamond', speed: 14, reward: 50 },
+    { id: 5, emoji: '🚀', name: 'Rocket', speed: 18, reward: 100 },
+    { id: 6, emoji: '🎁', name: 'Airdrop', speed: 22, reward: 200 },
 ];
 
 // 画布尺寸
@@ -21,8 +21,8 @@ const CANVAS_HEIGHT = 1200;
 
 const stmts = {
     insertRoom: db.prepare(`
-    INSERT INTO rooms (id, creator_id, name, token_symbol, pool_balance, max_players, meme_count, net_costs, status, creator_deposit, token_mint, room_pda, vault_pda)
-    VALUES (@id, @creatorId, @name, @tokenSymbol, @poolBalance, @maxPlayers, @memeCount, @netCosts, @status, @creatorDeposit, @tokenMint, @roomPda, @vaultPda)
+    INSERT INTO rooms (id, creator_id, name, token_symbol, pool_balance, max_players, meme_count, net_costs, status, creator_deposit, remaining_balance, token_mint, room_pda, vault_pda)
+    VALUES (@id, @creatorId, @name, @tokenSymbol, @poolBalance, @maxPlayers, @memeCount, @netCosts, @status, @creatorDeposit, @remainingBalance, @tokenMint, @roomPda, @vaultPda)
   `),
 
     getRoomById: db.prepare(`
@@ -63,6 +63,18 @@ const stmts = {
     FROM game_records
     WHERE room_id = ?
   `),
+
+    // 扣减池子余额
+    deductPoolBalance: db.prepare(`
+    UPDATE rooms SET remaining_balance = remaining_balance - @amount
+    WHERE id = @id AND remaining_balance >= @amount
+  `),
+
+    // 获取用户在房间内的统计
+    getUserRoomStats: db.prepare(`
+    SELECT COUNT(*) as captures, COALESCE(SUM(reward), 0) as total_points
+    FROM game_records WHERE room_id = ? AND user_id = ?
+  `),
 };
 
 // 内存中的房间状态 (Meme 位置等实时数据)
@@ -86,6 +98,7 @@ class RoomManager {
             tokenSymbol: options.tokenSymbol || 'MEME',
             poolBalance: initialDeposit,
             creatorDeposit: initialDeposit,
+            remainingBalance: initialDeposit, // 剩余可分配余额
             maxPlayers: options.maxPlayers || 10,
             memeCount: options.memeCount || 8,
             netCosts: JSON.stringify(options.netCosts || [0.005, 0.01, 0.02]),
@@ -333,6 +346,37 @@ class RoomManager {
     }
 
     /**
+     * 扣减池子余额（捕获成功时调用）
+     * @returns {boolean} 是否扣减成功
+     */
+    deductPoolBalance(roomId, amount) {
+        const result = stmts.deductPoolBalance.run({
+            id: roomId,
+            amount: Math.floor(amount),
+        });
+        return result.changes > 0;
+    }
+
+    /**
+     * 获取房间剩余可分配余额
+     */
+    getRoomRemainingBalance(roomId) {
+        const room = stmts.getRoomById.get(roomId);
+        return room ? (room.remaining_balance || 0) : 0;
+    }
+
+    /**
+     * 获取用户在房间内的捕获统计
+     */
+    getUserRoomStats(roomId, userId) {
+        return stmts.getUserRoomStats.get(roomId, userId) || {
+            captures: 0,
+            total_points: 0,
+        };
+    }
+
+
+    /**
      * 创建随机 Meme
      */
     _createRandomMeme() {
@@ -370,6 +414,8 @@ class RoomManager {
             name: dbRoom.name,
             tokenSymbol: dbRoom.token_symbol,
             poolBalance: dbRoom.pool_balance,
+            initialDeposit: dbRoom.initial_deposit || dbRoom.pool_balance || 0,
+            remainingBalance: dbRoom.remaining_balance || 0,
             maxPlayers: dbRoom.max_players,
             memeCount: dbRoom.meme_count,
             netCosts: JSON.parse(dbRoom.net_costs),

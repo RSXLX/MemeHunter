@@ -133,13 +133,48 @@ export default function MyClaims() {
                 {!loading && !error && claims.length === 0 && (
                     <div className="text-center py-20 bg-black/20 rounded-xl border border-white/5">
                         <span className="text-5xl block mb-4">🎁</span>
-                        <p className="text-text/50 mb-6">暂无可领取的空投</p>
+                        <p className="text-xl font-bold text-white mb-2">暂无可领取的空投</p>
+                        <p className="text-text/50 mb-6 max-w-md mx-auto">
+                            参与游戏房间，捕获 Meme 赚取积分。当房间结束时，积分将按比例兑换为代币空投！
+                        </p>
                         <Link
                             to="/"
                             className="px-6 py-3 bg-primary text-white rounded-lg font-bold hover:bg-primary/80 transition-all inline-block"
                         >
-                            去参与游戏
+                            🎮 去参与游戏
                         </Link>
+                    </div>
+                )}
+
+                {/* How it Works Card */}
+                {!loading && claims.length > 0 && (
+                    <div className="bg-gradient-to-r from-primary/10 to-cta/10 border border-primary/20 rounded-xl p-5 mb-6">
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-3">
+                            <span>💡</span> 如何领取空投
+                        </h3>
+                        <div className="grid md:grid-cols-3 gap-4 text-sm">
+                            <div className="flex items-start gap-2">
+                                <span className="text-xl">1️⃣</span>
+                                <div>
+                                    <p className="text-white font-medium">绑定钱包</p>
+                                    <p className="text-text/50">在游戏页面点击"Bind Wallet"绑定你的 Solana 钱包</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <span className="text-xl">2️⃣</span>
+                                <div>
+                                    <p className="text-white font-medium">点击领取</p>
+                                    <p className="text-text/50">找到待领取的空投，点击"🚀 领取"按钮</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <span className="text-xl">3️⃣</span>
+                                <div>
+                                    <p className="text-white font-medium">确认交易</p>
+                                    <p className="text-text/50">代币将直接发送到你绑定的钱包地址</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
 

@@ -9,10 +9,11 @@ import {
   type Animation
 } from '../../game/animations';
 import { memeInterpolator, type InterpolatedMeme } from '../../game/memeInterpolator';
-// import { useResponsiveCanvas } from '../../hooks/useResponsiveCanvas';
+import { useSocketContext } from '../../contexts/SocketContext';
 
 interface GameCanvasProps {
   selectedNet: number;
+  useLiveMode?: boolean; // true 使用真实后端, false 使用 MOCK 模式
   onHuntResult?: (
     success: boolean,
     reward: number,
@@ -55,17 +56,18 @@ function getCooldownForLevel(level: keyof typeof COMBO_LEVELS): number {
   return COMBO_LEVELS[level].cooldownMs;
 }
 
-export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProps) {
+export default function GameCanvas({ selectedNet, useLiveMode = false, onHuntResult }: GameCanvasProps) {
   const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationsRef = useRef<Animation[]>([]);
   const animationFrameRef = useRef<number | undefined>(undefined);
   const isHuntingRef = useRef<boolean>(false);
 
-  // 响应式画布尺寸 (现在使用 CSS w-full h-full)\r\n  // const { width: displayWidth, height: displayHeight, isMobile } = useResponsiveCanvas();
-
-  // Mock State
-  const isConnected = true;
+  // SocketContext 用于真实模式
+  const { isConnected: socketConnected, gameState, emitHunt } = useSocketContext();
+  
+  // 连接状态：真实模式使用 socket 连接状态，MOCK 模式始终为 true
+  const isConnected = useLiveMode ? socketConnected : true;
   const interpolatedMemesRef = useRef<InterpolatedMeme[]>([]);
 
   // 连击状态追踪
@@ -76,9 +78,12 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
   const frameCountRef = useRef(0);
   const lastUpdateTimeRef = useRef(performance.now());
 
-  // ---- PHYSICS-BASED GAME LOOP ----
+  // ---- PHYSICS-BASED GAME LOOP (仅 MOCK 模式) ----
 
   useEffect(() => {
+    // 真实模式不运行本地物理引擎
+    if (useLiveMode) return;
+    
     // 动态导入物理引擎
     import('../../game/MemePhysics').then(({ initMemePhysics, updateMemePhysics }) => {
       // Meme ID 计数器
@@ -210,8 +215,33 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
         clearInterval(spawnInterval);
       };
     });
-  }, []);
+  }, [useLiveMode]);
   // -----------------------------
+
+  // ---- 真实模式：从 gameState 同步 memes ----
+  useEffect(() => {
+    if (!useLiveMode || !gameState?.memes) return;
+    
+    // 将 gameState.memes 同步到 memeInterpolator
+    const serverMemes = gameState.memes.map(m => ({
+      id: m.id,
+      memeId: m.memeId,
+      emoji: m.emoji,
+      x: m.x,
+      y: m.y,
+    }));
+    
+    memeInterpolator.updateFromServer(serverMemes);
+  }, [useLiveMode, gameState]);
+
+  // 更新插值后的 memes（渲染用）
+  useEffect(() => {
+    const updateInterval = setInterval(() => {
+      interpolatedMemesRef.current = memeInterpolator.update();
+    }, 16); // 60fps
+
+    return () => clearInterval(updateInterval);
+  }, []);
 
   // 绘制函数
   const draw = useCallback((ctx: CanvasRenderingContext2D) => {
@@ -361,17 +391,33 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
 
       const { x, y } = getScaledCoordinates(clientX, clientY);
 
-      // 使用插值器的 meme 列表进行碰撞检测（使用渲染位置，即玩家的实际点击位置）
-      const currentMemes = memeInterpolator.getMemesForCollision();
-      const localMemes = currentMemes.map((m) => ({
-        id: m.id,
-        type: m.memeId,
-        x: m.x,
-        y: m.y,
-        vx: 0,
-        vy: 0,
-        size: 40,
-      }));
+      // 真实模式：从 gameState 获取 memes，MOCK 模式：从 memeInterpolator 获取
+      let localMemes: { id: string; type: number; x: number; y: number; vx: number; vy: number; size: number }[];
+      
+      if (useLiveMode && gameState?.memes) {
+        // 真实模式使用后端 gameState
+        localMemes = gameState.memes.map((m) => ({
+          id: m.id,
+          type: m.memeId,
+          x: m.x,
+          y: m.y,
+          vx: 0,
+          vy: 0,
+          size: 40,
+        }));
+      } else {
+        // MOCK 模式使用插值器
+        const currentMemes = memeInterpolator.getMemesForCollision();
+        localMemes = currentMemes.map((m) => ({
+          id: m.id,
+          type: m.memeId,
+          x: m.x,
+          y: m.y,
+          vx: 0,
+          vy: 0,
+          size: 40,
+        }));
+      }
 
       // 碰撞检测
       const collision = detectCollision(x, y, selectedNet, localMemes);
@@ -399,90 +445,162 @@ export default function GameCanvas({ selectedNet, onHuntResult }: GameCanvasProp
         return;
       }
 
-      // 模拟捕获处理
+      // 捕获处理
       isHuntingRef.current = true;
       const targetMeme = collision.meme;
       const memeConfig = MEME_CONFIG.find(m => m.id === targetMeme.type);
 
-      setTimeout(() => {
-        // 模拟 80% 成功率
-        const isSuccess = Math.random() > 0.2;
-        const reward = memeConfig?.reward || 0;
+      if (useLiveMode) {
+        // ========= 真实模式：调用后端 API =========
+        try {
+          const result = await emitHunt(x, y, NET_CONFIG[selectedNet].size, targetMeme.id);
+          
+          if (result.success) {
+            // 捕获成功
+            const captureAnim = createAnimation(
+              'capture',
+              targetMeme.x,
+              targetMeme.y,
+              selectedNet,
+              targetMeme,
+              true,
+              result.reward || 0
+            );
+            animationsRef.current = [...animationsRef.current, captureAnim];
 
-        if (isSuccess) {
-          // 捕获成功 - 更新连击
-          const prevCombo = successStreakRef.current;
-          successStreakRef.current++;
-          const newCombo = successStreakRef.current;
-          const prevLevel = getNetLevel(prevCombo);
-          const newLevel = getNetLevel(newCombo);
-          const levelUp = prevLevel !== newLevel;
+            // 更新连击状态（从后端返回）
+            const comboData = result.comboData || {
+              comboCount: (result.comboCount || 0),
+              netLevel: result.netLevel || 'normal',
+              cooldownMs: result.cooldownMs || 5000,
+              levelUp: result.levelUp || false,
+            };
 
-          const comboData = {
-            comboCount: newCombo,
-            netLevel: newLevel,
-            cooldownMs: getCooldownForLevel(newLevel),
-            levelUp,
-          };
+            onHuntResult?.(
+              true,
+              result.reward || 0,
+              targetMeme.type,
+              memeConfig?.emoji,
+              NET_CONFIG[selectedNet].cost,
+              result.txHash,
+              comboData
+            );
+          } else {
+            // 捕获失败（逃脱）
+            const escapeAnim = createAnimation(
+              'escape',
+              targetMeme.x,
+              targetMeme.y,
+              selectedNet,
+              targetMeme,
+              false
+            );
+            animationsRef.current = [...animationsRef.current, escapeAnim];
 
-          const captureAnim = createAnimation(
-            'capture',
-            targetMeme.x,
-            targetMeme.y,
-            selectedNet,
-            targetMeme,
-            true,
-            reward
-          );
-          animationsRef.current = [...animationsRef.current, captureAnim];
+            successStreakRef.current = 0;
+            const comboData = {
+              comboCount: 0,
+              netLevel: 'normal' as const,
+              cooldownMs: getCooldownForLevel('normal'),
+              levelUp: false,
+            };
 
-          // 移除被捕获的 meme (前端模拟移除)
-          memeInterpolator['memes'].delete(targetMeme.id); // hack access
-
-          onHuntResult?.(
-            true,
-            reward,
-            targetMeme.type,
-            memeConfig?.emoji,
-            NET_CONFIG[selectedNet].cost,
-            "0x_mock_tx_hash",
-            comboData
-          );
-        } else {
-          // 逃脱 - 重置连击
-          successStreakRef.current = 0;
-          const comboData = {
-            comboCount: 0,
-            netLevel: 'normal' as const,
-            cooldownMs: getCooldownForLevel('normal'),
-            levelUp: false,
-          };
-
-          const escapeAnim = createAnimation(
-            'escape',
-            targetMeme.x,
-            targetMeme.y,
-            selectedNet,
-            targetMeme,
-            false
-          );
-          animationsRef.current = [...animationsRef.current, escapeAnim];
-
-          onHuntResult?.(
-            false,
-            0,
-            targetMeme.type,
-            memeConfig?.emoji,
-            NET_CONFIG[selectedNet].cost,
-            "0x_mock_tx_hash",
-            comboData
-          );
+            onHuntResult?.(
+              false,
+              0,
+              targetMeme.type,
+              memeConfig?.emoji,
+              NET_CONFIG[selectedNet].cost,
+              undefined,
+              comboData
+            );
+          }
+        } catch (error) {
+          console.error('Hunt error:', error);
+        } finally {
+          isHuntingRef.current = false;
         }
-        isHuntingRef.current = false;
-      }, 500);
+      } else {
+        // ========= MOCK 模式：本地模拟 =========
+        setTimeout(() => {
+          // 模拟 80% 成功率
+          const isSuccess = Math.random() > 0.2;
+          const reward = memeConfig?.reward || 0;
 
+          if (isSuccess) {
+            // 捕获成功 - 更新连击
+            const prevCombo = successStreakRef.current;
+            successStreakRef.current++;
+            const newCombo = successStreakRef.current;
+            const prevLevel = getNetLevel(prevCombo);
+            const newLevel = getNetLevel(newCombo);
+            const levelUp = prevLevel !== newLevel;
+
+            const comboData = {
+              comboCount: newCombo,
+              netLevel: newLevel,
+              cooldownMs: getCooldownForLevel(newLevel),
+              levelUp,
+            };
+
+            const captureAnim = createAnimation(
+              'capture',
+              targetMeme.x,
+              targetMeme.y,
+              selectedNet,
+              targetMeme,
+              true,
+              reward
+            );
+            animationsRef.current = [...animationsRef.current, captureAnim];
+
+            // 移除被捕获的 meme (前端模拟移除)
+            memeInterpolator['memes'].delete(targetMeme.id); // hack access
+
+            onHuntResult?.(
+              true,
+              reward,
+              targetMeme.type,
+              memeConfig?.emoji,
+              NET_CONFIG[selectedNet].cost,
+              "0x_mock_tx_hash",
+              comboData
+            );
+          } else {
+            // 逃脱 - 重置连击
+            successStreakRef.current = 0;
+            const comboData = {
+              comboCount: 0,
+              netLevel: 'normal' as const,
+              cooldownMs: getCooldownForLevel('normal'),
+              levelUp: false,
+            };
+
+            const escapeAnim = createAnimation(
+              'escape',
+              targetMeme.x,
+              targetMeme.y,
+              selectedNet,
+              targetMeme,
+              false
+            );
+            animationsRef.current = [...animationsRef.current, escapeAnim];
+
+            onHuntResult?.(
+              false,
+              0,
+              targetMeme.type,
+              memeConfig?.emoji,
+              NET_CONFIG[selectedNet].cost,
+              "0x_mock_tx_hash",
+              comboData
+            );
+          }
+          isHuntingRef.current = false;
+        }, 500);
+      }
     },
-    [selectedNet, onHuntResult, getScaledCoordinates]
+    [selectedNet, onHuntResult, getScaledCoordinates, useLiveMode, gameState, emitHunt]
   );
 
   // 鼠标点击事件

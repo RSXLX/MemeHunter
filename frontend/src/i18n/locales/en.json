@@ -29,7 +29,19 @@
     "resetSession": "Reset Session",
     "resetConfirm": "Reset local session key? This will require re-authorization.",
     "poweredBy": "Powered by",
-    "solana": "SOLANA"
+    "solana": "SOLANA",
+    "selectRoomPrompt": "Select a Room",
+    "startHunting": "to Start Hunting",
+    "joinHint": "Join an active game on the right 👉",
+    "joinHintMobile": "Join an active game below 👇",
+    "createRoom": "+ Create Room",
+    "myRooms": "🎮 My Rooms",
+    "walletType": "Wallet",
+    "guestType": "Guest",
+    "tokens": "Tokens",
+    "claimAirdrop": "💰 Claim Airdrop",
+    "bindWallet": "🔗 Bind Wallet",
+    "availableRooms": "🏠 Available Rooms"
   },
   "game": {
     "title": "MEME HUNTER",
@@ -97,5 +109,61 @@
   "canvas": {
     "synced": "SYNCED",
     "offline": "OFFLINE"
+  },
+  "roomList": {
+    "searchPlaceholder": "Search...",
+    "filterAll": "All",
+    "noRooms": "No rooms found",
+    "count": "{{count}} / {{total}} rooms"
+  },
+  "createRoom": {
+    "title": "🎮 Create Room",
+    "connectRequired": "⚠️ Please connect wallet to create room",
+    "roomName": "Room Name",
+    "optional": "(Optional)",
+    "placeholder": "Leave empty to auto-generate",
+    "selectToken": "Select Token",
+    "noTokens": "No tokens found in wallet. Please get some SPL Tokens.",
+    "depositAmount": "Deposit Amount",
+    "max": "MAX",
+    "balance": "Available: {{amount}} {{symbol}}",
+    "creator": "Creator",
+    "deposit": "Deposit",
+    "initialize": "🔧 Initialize System (Fix Devnet)",
+    "cancel": "Cancel",
+    "creating": "Creating...",
+    "confirm": "Create Room",
+    "systemReady": "SYSTEM: READY"
+  },
+  "bindWallet": {
+    "title": "Bind Wallet",
+    "successTitle": "Wallet Bound!",
+    "successDesc": "You are now eligible for airdrops",
+    "failedTitle": "Bind Failed",
+    "tryAgain": "Try Again",
+    "signingTitle": "Signing...",
+    "signingDesc": "Please confirm in your wallet",
+    "connectedWallet": "Connected Wallet",
+    "warning": "⚠️ This wallet will be permanently bound to your account. Make sure this is the wallet you want to use for airdrops.",
+    "signBtn": "Sign to Bind Wallet",
+    "introTitle": "Bind Wallet for Airdrops",
+    "introDesc": "Connect and bind your Solana wallet to become eligible for token airdrops. Your earned points will be converted to tokens!",
+    "step1": "Connect your Solana wallet",
+    "step2": "Sign a message to verify ownership",
+    "step3": "Receive airdrops to your wallet",
+    "connectBtn": "Connect Wallet"
+  },
+  "tokenSelector": {
+    "loading": "Loading...",
+    "placeholder": "Select Token",
+    "noTokens": "No tokens in wallet",
+    "noMatch": "No matching tokens found",
+    "searchPlaceholder": "Search tokens..."
+  },
+  "walletLogin": {
+    "signing": "Signing...",
+    "signToLogin": "Sign to Login",
+    "connectWallet": "Connect Wallet",
+    "clickToSign": "Click to sign and login"
   }
 }

@@ -83,6 +83,7 @@ export default function MyRooms() {
     };
 
     // 追加投入
+    // TODO P2: 集成钱包签名转账（当前仅更新数据库）
     const depositToRoom = async (roomId: string) => {
         const amountStr = prompt('请输入追加金额:');
         if (!amountStr) return;
@@ -98,6 +99,11 @@ export default function MyRooms() {
 
         setActionLoading(roomId);
         try {
+            // TODO P2: 在此处添加钱包转账逻辑
+            // 1. 调用 useWallet 的 signTransaction
+            // 2. 发送代币到房间 vault
+            // 3. 获取 txHash 后调用后端 API 更新记录
+            
             const res = await fetch(`${API_BASE_URL}/rooms/${roomId}/deposit`, {
                 method: 'POST',
                 headers: {
@@ -108,7 +114,7 @@ export default function MyRooms() {
             });
             const data = await res.json();
             if (data.success) {
-                alert(`成功追加 ${amount} 到奖池`);
+                alert(`成功追加 ${amount} 到奖池（模拟，链上集成待完成）`);
                 fetchMyRooms();
             } else {
                 alert(data.message || '操作失败');
@@ -330,6 +336,14 @@ export default function MyRooms() {
                                                     🔙 停止退回
                                                 </button>
                                             </>
+                                        )}
+                                        {(room.status === 'settled' || room.status === 'stopped') && (
+                                            <Link
+                                                to={`/room/${room.id}/claims`}
+                                                className="px-4 py-2 bg-green-500/20 border border-green-500/30 rounded-lg text-sm text-green-400 hover:bg-green-500/30 transition-all"
+                                            >
+                                                📋 查看分发记录
+                                            </Link>
                                         )}
                                     </div>
                                 </div>

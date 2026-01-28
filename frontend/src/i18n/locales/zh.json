@@ -29,7 +29,19 @@
     "resetSession": "重置会话",
     "resetConfirm": "确定重置本地会话密钥？这将需要重新授权。",
     "poweredBy": "技术支持",
-    "solana": "SOLANA"
+    "solana": "SOLANA",
+    "selectRoomPrompt": "选择房间",
+    "startHunting": "开始狩猎",
+    "joinHint": "加入右侧活跃游戏 👉",
+    "joinHintMobile": "加入下方活跃游戏 👇",
+    "createRoom": "+ 创建房间",
+    "myRooms": "🎮 我的房间",
+    "walletType": "钱包",
+    "guestType": "游客",
+    "tokens": "代币",
+    "claimAirdrop": "💰 领取空投",
+    "bindWallet": "🔗 绑定钱包",
+    "availableRooms": "🏠 可用房间"
   },
   "game": {
     "title": "MEME 猎人",
@@ -97,5 +109,61 @@
   "canvas": {
     "synced": "已同步",
     "offline": "离线"
+  },
+  "roomList": {
+    "searchPlaceholder": "搜索...",
+    "filterAll": "全部",
+    "noRooms": "未找到房间",
+    "count": "{{count}} / {{total}} 房间"
+  },
+  "createRoom": {
+    "title": "🎮 创建房间",
+    "connectRequired": "⚠️ 请先连接钱包以创建房间",
+    "roomName": "房间名称",
+    "optional": "(可选)",
+    "placeholder": "留空自动生成",
+    "selectToken": "选择代币",
+    "noTokens": "钱包中没有找到代币。请先获取一些 SPL Token。",
+    "depositAmount": "存入金额",
+    "max": "最大",
+    "balance": "可用余额: {{amount}} {{symbol}}",
+    "creator": "创建者",
+    "deposit": "存入代币",
+    "initialize": "🔧 初始化系统 (修复开发网)",
+    "cancel": "取消",
+    "creating": "创建中...",
+    "confirm": "创建房间",
+    "systemReady": "系统: 就绪"
+  },
+  "bindWallet": {
+    "title": "绑定钱包",
+    "successTitle": "绑定成功！",
+    "successDesc": "您现在有资格获得空投",
+    "failedTitle": "绑定失败",
+    "tryAgain": "重试",
+    "signingTitle": "签名中...",
+    "signingDesc": "请在您的钱包中确认",
+    "connectedWallet": "已连接钱包",
+    "warning": "⚠️ 此钱包将永久绑定到您的账户。请确保这是您想要用于接收空投的钱包。",
+    "signBtn": "签名并绑定",
+    "introTitle": "绑定钱包获取空投",
+    "introDesc": "连接并绑定您的 Solana 钱包以获得代币空投资格。您赚取的积分将转换为代币！",
+    "step1": "连接您的 Solana 钱包",
+    "step2": "签名消息以验证所有权",
+    "step3": "接收空投到您的钱包",
+    "connectBtn": "连接钱包"
+  },
+  "tokenSelector": {
+    "loading": "加载中...",
+    "placeholder": "选择代币",
+    "noTokens": "钱包中没有代币",
+    "noMatch": "未找到匹配的代币",
+    "searchPlaceholder": "搜索代币..."
+  },
+  "walletLogin": {
+    "signing": "签名中...",
+    "signToLogin": "签名登录",
+    "connectWallet": "连接钱包",
+    "clickToSign": "点击签名登录"
   }
 }

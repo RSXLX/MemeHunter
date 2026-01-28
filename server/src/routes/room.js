@@ -166,6 +166,59 @@ roomRouter.get('/rooms/:id/qrcode', async (req, res) => {
 });
 
 /**
+ * GET /api/rooms/:id/my-stats
+ * 获取用户在该房间的捕获统计
+ */
+roomRouter.get('/rooms/:id/my-stats', requireSession, (req, res) => {
+    try {
+        const roomId = req.params.id;
+        const room = roomManager.getRoomById(roomId);
+
+        if (!room) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: 'Room not found',
+            });
+        }
+
+        // 获取用户在房间内的统计
+        const userStats = roomManager.getUserRoomStats(roomId, req.user.id);
+        
+        // 获取房间总体统计
+        const roomStats = roomManager.getRoomStats(roomId);
+        const totalPoints = roomStats.total_rewards || 0;
+
+        // 计算预估可领取代币
+        let estimatedReward = 0;
+        if (totalPoints > 0 && room.poolBalance > 0) {
+            const shareRatio = userStats.total_points / totalPoints;
+            estimatedReward = Math.floor(room.poolBalance * shareRatio);
+        }
+
+        res.json({
+            success: true,
+            stats: {
+                captures: userStats.captures,
+                totalPoints: userStats.total_points,
+                shareRatio: totalPoints > 0 ? (userStats.total_points / totalPoints) : 0,
+                estimatedReward: estimatedReward,
+            },
+            room: {
+                poolBalance: room.poolBalance,
+                remainingBalance: room.remainingBalance,
+                status: room.status,
+            },
+        });
+    } catch (error) {
+        console.error('Get user room stats error:', error);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: error.message,
+        });
+    }
+});
+
+/**
  * PATCH /api/rooms/:id/status
  * 更新房间状态 (仅创建者)
  */

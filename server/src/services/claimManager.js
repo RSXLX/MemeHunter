@@ -12,7 +12,13 @@ const stmts = {
     `),
     
     getClaimById: db.prepare('SELECT * FROM claims WHERE id = ?'),
-    getClaimsByRoom: db.prepare('SELECT * FROM claims WHERE room_id = ? ORDER BY token_amount DESC'),
+    getClaimsByRoom: db.prepare(`
+        SELECT c.*, u.nickname as user_nickname, u.wallet_address as user_wallet
+        FROM claims c
+        LEFT JOIN users u ON c.user_id = u.id
+        WHERE c.room_id = ?
+        ORDER BY c.token_amount DESC
+    `),
     getClaimsByUser: db.prepare('SELECT * FROM claims WHERE user_id = ? ORDER BY created_at DESC'),
     getPendingClaimsByRoom: db.prepare("SELECT * FROM claims WHERE room_id = ? AND status = 'pending'"),
     

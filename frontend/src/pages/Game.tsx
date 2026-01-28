@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, Component, type ReactNode, type ErrorInfo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useGuestAuth } from '../hooks/useGuestAuth';
 import { useWalletAuth } from '../hooks/useWalletAuth';
 import { API_BASE_URL, getSessionId } from '../config/api';
@@ -12,6 +12,7 @@ import LanguageSwitcher from '../components/common/LanguageSwitcher';
 import QRCodeShare from '../components/room/QRCodeShare';
 import WithdrawModal from '../components/game/WithdrawModal';
 import { BindWalletModal } from '../components/wallet/BindWalletModal';
+import { useSocketContext } from '../contexts/SocketContext';
 
 import type { HuntRecord } from '../components/game/HuntHistoryPanel';
 
@@ -27,11 +28,7 @@ interface ComboState {
   cooldownMs: number;
 }
 
-interface CooldownStatus {
-  canHunt: boolean;
-  remainingMs: number;
-  cooldownMs: number;
-}
+// Interface removed: CooldownStatus
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -78,16 +75,28 @@ export default function Game() {
   const [currentRoomId, setCurrentRoomId] = useState<string>(routeRoomId || 'default');
   const [isJoiningRoom, setIsJoiningRoom] = useState(false);
 
-  // 自动加入房间逻辑
+  // 从 SocketContext 获取 joinRoom 方法
+  const { joinRoom, isLoggedIn } = useSocketContext();
+
+  // 自动加入 WebSocket 房间
   useEffect(() => {
-    if (routeRoomId && routeRoomId !== currentRoomId) {
+    if (currentRoomId && isLoggedIn) {
       setIsJoiningRoom(true);
-      setCurrentRoomId(routeRoomId);
+      console.log(`🎮 Joining room via WebSocket: ${currentRoomId}`);
+      joinRoom(currentRoomId);
+      
       // 模拟加入房间延迟
       setTimeout(() => {
         setIsJoiningRoom(false);
-        console.log(`🎮 Joined room: ${routeRoomId}`);
+        console.log(`🎮 Joined room: ${currentRoomId}`);
       }, 500);
+    }
+  }, [currentRoomId, isLoggedIn, joinRoom]);
+
+  // 同步路由参数到 currentRoomId
+  useEffect(() => {
+    if (routeRoomId && routeRoomId !== currentRoomId) {
+      setCurrentRoomId(routeRoomId);
     }
   }, [routeRoomId, currentRoomId]);
 
@@ -146,17 +155,18 @@ export default function Game() {
   const [huntHistory, setHuntHistory] = useState<HuntRecord[]>([]);
 
   // 连击和冷却状态
-  const [comboState, setComboState] = useState<ComboState>({
+  const [_comboState, setComboState] = useState<ComboState>({
     comboCount: 0,
     netLevel: 'normal',
     cooldownMs: 5000,
   });
-  const [cooldownStatus, setCooldownStatus] = useState<CooldownStatus>({
-    canHunt: true,
-    remainingMs: 0,
-    cooldownMs: 5000,
-  });
-  const [levelUp, setLevelUp] = useState(false);
+  // 冷却状态
+  // const { currentCooldown: _currentCooldown, isCoolingDown: _isCoolingDown } = useCooldown(); // This line was not in the original, but in the provided snippet. I'll assume it's a placeholder for future integration.
+  // 狩猎历史面板
+  // const [showHistory, setShowHistory] = useState(false); // This line was not in the original, but in the provided snippet. I'll assume it's a placeholder for future integration.
+  
+  // 升级动画状态
+  const [_levelUp, setLevelUp] = useState(false);
 
   const handleExit = useCallback(() => {
     navigate('/');
@@ -178,12 +188,12 @@ export default function Game() {
         cooldownMs: comboData.cooldownMs,
       });
 
-      // 更新冷却状态
-      setCooldownStatus({
-        canHunt: false,
-        remainingMs: comboData.cooldownMs,
-        cooldownMs: comboData.cooldownMs,
-      });
+      // 冷却机制已禁用 - 始终可捕捉
+      // setCooldownStatus({
+      //   canHunt: false,
+      //   remainingMs: comboData.cooldownMs,
+      //   cooldownMs: comboData.cooldownMs,
+      // });
 
       // 处理升级动画
       if (comboData.levelUp) {
@@ -191,14 +201,14 @@ export default function Game() {
         setTimeout(() => setLevelUp(false), 2000);
       }
 
-      // 冷却完成后更新状态
-      setTimeout(() => {
-        setCooldownStatus(prev => ({
-          ...prev,
-          canHunt: true,
-          remainingMs: 0,
-        }));
-      }, comboData.cooldownMs);
+      // 冷却机制已禁用 - 不需要延时更新
+      // setTimeout(() => {
+      //   setCooldownStatus(prev => ({
+      //     ...prev,
+      //     canHunt: true,
+      //     remainingMs: 0,
+      //   }));
+      // }, comboData.cooldownMs);
     }
 
     // 捎捉成功后会由 useGuestAuth 自动刷新余额
@@ -242,24 +252,6 @@ export default function Game() {
 
           <div className="flex items-center justify-between px-3 md:px-6 py-2 md:py-4 bg-background/90 backdrop-blur-md border-b border-white/5">
             <div className="flex items-center gap-6">
-              {/* Balance Display */}
-              <div className="max-md:hidden card px-4 py-2 flex items-center gap-3 !bg-white/5 !border-white/10 !p-2 !rounded-lg">
-                <div className="w-2 h-2 bg-cta rounded-full animate-pulse shadow-[0_0_8px_var(--color-cta)]"></div>
-                <div className="font-mono leading-none">
-                  <div className="text-[10px] text-secondary uppercase tracking-widest mb-0.5">Balance</div>
-                  <span className="text-lg font-bold text-text font-display">
-                    {balance.toLocaleString()}
-                  </span>
-                  <span className="text-xs text-text/50 ml-1">{tokenSymbol}</span>
-                </div>
-                <button
-                  onClick={() => setShowWithdrawModal(true)}
-                  className="ml-3 px-2 py-1 bg-cta/20 hover:bg-cta/40 border border-cta/30 rounded text-cta text-xs font-bold transition-colors"
-                  title="Withdraw"
-                >
-                  💸
-                </button>
-              </div>
 
               {/* Room Pool Display */}
               <div className="max-md:hidden card px-4 py-2 flex items-center gap-3 !bg-white/5 !border-white/10 !p-2 !rounded-lg">
@@ -350,6 +342,15 @@ export default function Game() {
                 </div>
               )}
 
+              {/* Claims Entry */}
+              <Link
+                to="/my-claims"
+                className="px-3 py-1.5 flex items-center gap-2 border border-yellow-500/30 bg-yellow-500/10 rounded-lg hover:bg-yellow-500/20 transition-colors"
+              >
+                <span className="text-yellow-400 text-sm">🎁</span>
+                <span className="text-yellow-400 font-mono text-xs font-bold max-sm:hidden">Claims</span>
+              </Link>
+
               {/* Exit Button */}
               <button
                 onClick={handleExit}
@@ -382,6 +383,8 @@ export default function Game() {
           </div>
         )}
 
+
+
         {/* Main Game Area */}
         <main className="flex-1 flex overflow-hidden relative z-10 p-2 md:p-6 gap-2 md:gap-6 min-h-0">
           {/* Left: Game Canvas */}
@@ -403,6 +406,7 @@ export default function Game() {
 
                   <GameCanvas
                     selectedNet={selectedNet}
+                    useLiveMode={true}
                     onHuntResult={(success, reward, memeId, memeEmoji, netCost, txHash, comboData) =>
                       handleHuntResult(success, reward, selectedNet, memeId, memeEmoji, netCost, txHash, comboData)
                     }
@@ -489,9 +493,6 @@ export default function Game() {
 
         {/* Bottom Control Bar */}
         <ControlBar
-          comboState={comboState}
-          cooldownStatus={cooldownStatus}
-          levelUp={levelUp}
           tokenSymbol={tokenSymbol}
           totalEarned={stats.totalRewards}
         />

@@ -208,34 +208,70 @@ export function initWebSocket(io) {
         const baseReward = meme.reward || MEME_CONFIGS.find(c => c.id === meme.memeId)?.reward || 10;
         const rewardInfo = calculateReward(baseReward, meme.memeId, socket.id);
 
+        // 检查池子余额
+        const remainingBalance = roomManager.getRoomRemainingBalance(userData.roomId);
+        let actualReward = rewardInfo.finalReward;
+        let poolExhausted = false;
+
+        if (remainingBalance <= 0) {
+          // 池子已空
+          actualReward = 0;
+          poolExhausted = true;
+        } else if (remainingBalance < rewardInfo.finalReward) {
+          // 池子不足，发放剩余
+          actualReward = remainingBalance;
+        }
+
         // 移除 Meme
         roomManager.removeMeme(userData.roomId, memeId);
 
-        // 增加积分 (使用最终奖励)
-        const updatedUser = userManager.addBalance(userData.user.id, rewardInfo.finalReward, true);
-        userData.user = updatedUser;
+        // 只有有奖励时才扣减和记录
+        if (actualReward > 0) {
+          // 扣减池子余额
+          roomManager.deductPoolBalance(userData.roomId, actualReward);
+          
+          // 增加积分 (使用实际奖励)
+          const updatedUser = userManager.addBalance(userData.user.id, actualReward, true);
+          userData.user = updatedUser;
 
-        // 记录游戏
-        roomManager.recordCapture(userData.roomId, userData.user.id, meme.memeId, rewardInfo.finalReward);
+          // 记录游戏
+          roomManager.recordCapture(userData.roomId, userData.user.id, meme.memeId, actualReward);
 
-        // 发送结果 (包含连击信息)
-        socket.emit('huntResult', {
-          success: true,
-          result: 'catch',
-          memeId: memeId,
-          reward: rewardInfo.finalReward,
-          rewardBreakdown: rewardInfo.breakdown,
-          rarityName: rewardInfo.rarityName,
-          rarityMultiplier: rewardInfo.rarityMultiplier,
-          comboMultiplier: rewardInfo.comboMultiplier,
-          newBalance: updatedUser.balance,
-          levelUp: successState.levelUp,
-          comboState: {
-            comboCount: successState.comboCount,
-            netLevel: successState.netLevel,
-            cooldownMs: successState.cooldownMs,
-          },
-        });
+          // 发送结果 (包含连击信息)
+          socket.emit('huntResult', {
+            success: true,
+            result: 'catch',
+            memeId: memeId,
+            reward: actualReward,
+            rewardBreakdown: rewardInfo.breakdown,
+            rarityName: rewardInfo.rarityName,
+            rarityMultiplier: rewardInfo.rarityMultiplier,
+            comboMultiplier: rewardInfo.comboMultiplier,
+            newBalance: updatedUser.balance,
+            levelUp: successState.levelUp,
+            comboState: {
+              comboCount: successState.comboCount,
+              netLevel: successState.netLevel,
+              cooldownMs: successState.cooldownMs,
+            },
+            poolExhausted: poolExhausted,
+          });
+        } else {
+          // 池子已空，捕获成功但无奖励
+          socket.emit('huntResult', {
+            success: true,
+            result: 'catch',
+            memeId: memeId,
+            reward: 0,
+            message: '🏦 Pool exhausted! Room ending soon...',
+            poolExhausted: true,
+            comboState: {
+              comboCount: successState.comboCount,
+              netLevel: successState.netLevel,
+              cooldownMs: successState.cooldownMs,
+            },
+          });
+        }
 
         // 广播给房间
         io.to(userData.roomId).emit('memeRemoved', { memeId: memeId });
@@ -243,7 +279,7 @@ export function initWebSocket(io) {
           playerId: userData.user.id,
           nickname: userData.user.nickname,
           memeId: memeId,
-          reward: rewardInfo.finalReward,
+          reward: actualReward,
           result: 'catch',
           comboCount: successState.comboCount,
           netLevel: successState.netLevel,
@@ -252,6 +288,16 @@ export function initWebSocket(io) {
         // 广播排行榜更新
         const leaderboard = userManager.getLeaderboard(10);
         io.to(userData.roomId).emit('leaderboardUpdate', leaderboard);
+
+        // 检查是否池子耗尽需要结束房间
+        if (poolExhausted) {
+          io.to(userData.roomId).emit('poolExhausted', {
+            roomId: userData.roomId,
+            message: 'Pool exhausted! Room is ending...',
+          });
+          console.log(`🏦 Room ${userData.roomId} pool exhausted!`);
+        }
+
 
       } else {
         // 逃脱 - 连击重置

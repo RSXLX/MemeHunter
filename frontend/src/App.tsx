@@ -10,6 +10,7 @@ import Game from './pages/Game';
 import Withdraw from './pages/Withdraw';
 import MyRooms from './pages/MyRooms';
 import MyClaims from './pages/MyClaims';
+import RoomClaims from './pages/RoomClaims';
 import './index.css';
 
 // Wallet Adapter CSS
@@ -48,7 +49,8 @@ function App() {
                     <Route path="/r/:roomId" element={<Game />} />
                     <Route path="/withdraw" element={<Withdraw />} />
                     <Route path="/my-rooms" element={<MyRooms />} />
-                    <Route path="/my-claims" element={<MyClaims />} /> {/* Added MyClaims route */}
+                    <Route path="/my-claims" element={<MyClaims />} />
+                    <Route path="/room/:roomId/claims" element={<RoomClaims />} />
                   </Routes>
                 </div>
               </BrowserRouter>

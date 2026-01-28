@@ -53,10 +53,12 @@ interface SocketContextType {
     messages: ChatMessage[];
     gameState: GameState | null;
     roomId: string | null;
+    poolExhausted: boolean;
     // Actions
     joinRoom: (roomId?: string) => void;
     sendMessage: (content: string) => void;
     emitHunt: (x: number, y: number, netSize: number, memeId: string) => Promise<any>;
+    resetPoolExhausted: () => void;
 }
 
 const SocketContext = createContext<SocketContextType | null>(null);
@@ -74,6 +76,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [gameState, setGameState] = useState<GameState | null>(null);
     const [roomId, setRoomId] = useState<string | null>(null);
+    const [poolExhausted, setPoolExhausted] = useState(false);
 
     // 初始化 Socket 连接
     useEffect(() => {
@@ -153,6 +156,12 @@ export function SocketProvider({ children }: SocketProviderProps) {
             });
         });
 
+        // 池子耗尽事件
+        socket.on('poolExhausted', ({ roomId: exhaustedRoomId, message }) => {
+            console.log('🏦 [SocketContext] Pool exhausted:', exhaustedRoomId, message);
+            setPoolExhausted(true);
+        });
+
         return () => {
             socket.disconnect();
             socketRef.current = null;
@@ -198,6 +207,11 @@ export function SocketProvider({ children }: SocketProviderProps) {
         });
     }, []);
 
+    // 重置池子耗尽状态
+    const resetPoolExhausted = useCallback(() => {
+        setPoolExhausted(false);
+    }, []);
+
     const value: SocketContextType = {
         socket: socketRef.current,
         isConnected,
@@ -207,9 +221,11 @@ export function SocketProvider({ children }: SocketProviderProps) {
         messages,
         gameState,
         roomId,
+        poolExhausted,
         joinRoom,
         sendMessage,
         emitHunt,
+        resetPoolExhausted,
     };
 
     return (
